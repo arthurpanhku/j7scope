@@ -1,0 +1,1289 @@
+{
+  "basis": "demo_deterministic_layout",
+  "description": "Python-side projection placeholder for frontend development.",
+  "links": [
+    {
+      "kind": "translation_pair",
+      "pair_id": "deception-01",
+      "source": "deception-01:zh:baseline",
+      "target": "deception-01:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "deception-02",
+      "source": "deception-02:zh:baseline",
+      "target": "deception-02:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "deception-03",
+      "source": "deception-03:zh:baseline",
+      "target": "deception-03:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "deception-04",
+      "source": "deception-04:zh:baseline",
+      "target": "deception-04:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "manipulation-01",
+      "source": "manipulation-01:zh:baseline",
+      "target": "manipulation-01:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "manipulation-02",
+      "source": "manipulation-02:zh:baseline",
+      "target": "manipulation-02:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "manipulation-03",
+      "source": "manipulation-03:zh:baseline",
+      "target": "manipulation-03:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "manipulation-04",
+      "source": "manipulation-04:zh:baseline",
+      "target": "manipulation-04:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "concession-01",
+      "source": "concession-01:zh:baseline",
+      "target": "concession-01:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "concession-02",
+      "source": "concession-02:zh:baseline",
+      "target": "concession-02:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "evalaware-01",
+      "source": "evalaware-01:zh:baseline",
+      "target": "evalaware-01:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "evalaware-02",
+      "source": "evalaware-02:zh:baseline",
+      "target": "evalaware-02:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "evalaware-03",
+      "source": "evalaware-03:zh:baseline",
+      "target": "evalaware-03:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "evalaware-04",
+      "source": "evalaware-04:zh:baseline",
+      "target": "evalaware-04:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "emotion-01",
+      "source": "emotion-01:zh:baseline",
+      "target": "emotion-01:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "emotion-02",
+      "source": "emotion-02:zh:baseline",
+      "target": "emotion-02:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "emotion-03",
+      "source": "emotion-03:zh:baseline",
+      "target": "emotion-03:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "emotion-04",
+      "source": "emotion-04:zh:baseline",
+      "target": "emotion-04:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "emotion-05",
+      "source": "emotion-05:zh:baseline",
+      "target": "emotion-05:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "emotion-06",
+      "source": "emotion-06:zh:baseline",
+      "target": "emotion-06:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "multihop-01",
+      "source": "multihop-01:zh:baseline",
+      "target": "multihop-01:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "multihop-02",
+      "source": "multihop-02:zh:baseline",
+      "target": "multihop-02:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "multihop-03",
+      "source": "multihop-03:zh:baseline",
+      "target": "multihop-03:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "multihop-04",
+      "source": "multihop-04:zh:baseline",
+      "target": "multihop-04:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "entity-01",
+      "source": "entity-01:zh:baseline",
+      "target": "entity-01:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "entity-02",
+      "source": "entity-02:zh:baseline",
+      "target": "entity-02:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "entity-03",
+      "source": "entity-03:zh:baseline",
+      "target": "entity-03:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "entity-04",
+      "source": "entity-04:zh:baseline",
+      "target": "entity-04:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "entity-05",
+      "source": "entity-05:zh:baseline",
+      "target": "entity-05:en:baseline"
+    },
+    {
+      "kind": "translation_pair",
+      "pair_id": "entity-06",
+      "source": "entity-06:zh:baseline",
+      "target": "entity-06:en:baseline"
+    }
+  ],
+  "points": [
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "baseline",
+      "id": "deception-01:zh:baseline",
+      "language": "zh",
+      "pair_id": "deception-01",
+      "x": -3.78,
+      "y": 1.549
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "patched",
+      "id": "deception-01:zh:patched",
+      "language": "zh",
+      "pair_id": "deception-01",
+      "x": -3.444,
+      "y": 1.816
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "baseline",
+      "id": "deception-01:en:baseline",
+      "language": "en",
+      "pair_id": "deception-01",
+      "x": -3.215,
+      "y": 1.602
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "patched",
+      "id": "deception-01:en:patched",
+      "language": "en",
+      "pair_id": "deception-01",
+      "x": -2.904,
+      "y": 1.73
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "baseline",
+      "id": "deception-02:zh:baseline",
+      "language": "zh",
+      "pair_id": "deception-02",
+      "x": -3.374,
+      "y": 1.621
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "patched",
+      "id": "deception-02:zh:patched",
+      "language": "zh",
+      "pair_id": "deception-02",
+      "x": -3.149,
+      "y": 1.879
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "baseline",
+      "id": "deception-02:en:baseline",
+      "language": "en",
+      "pair_id": "deception-02",
+      "x": -3.169,
+      "y": 1.41
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "patched",
+      "id": "deception-02:en:patched",
+      "language": "en",
+      "pair_id": "deception-02",
+      "x": -2.811,
+      "y": 1.713
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "baseline",
+      "id": "deception-03:zh:baseline",
+      "language": "zh",
+      "pair_id": "deception-03",
+      "x": -3.755,
+      "y": 1.713
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "patched",
+      "id": "deception-03:zh:patched",
+      "language": "zh",
+      "pair_id": "deception-03",
+      "x": -3.525,
+      "y": 1.98
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "baseline",
+      "id": "deception-03:en:baseline",
+      "language": "en",
+      "pair_id": "deception-03",
+      "x": -3.275,
+      "y": 1.468
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "patched",
+      "id": "deception-03:en:patched",
+      "language": "en",
+      "pair_id": "deception-03",
+      "x": -3.193,
+      "y": 1.38
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "baseline",
+      "id": "deception-04:zh:baseline",
+      "language": "zh",
+      "pair_id": "deception-04",
+      "x": -3.534,
+      "y": 1.903
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "patched",
+      "id": "deception-04:zh:patched",
+      "language": "zh",
+      "pair_id": "deception-04",
+      "x": -3.487,
+      "y": 1.656
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "baseline",
+      "id": "deception-04:en:baseline",
+      "language": "en",
+      "pair_id": "deception-04",
+      "x": -3.4,
+      "y": 1.372
+    },
+    {
+      "abstractness": "abstract",
+      "category": "deception",
+      "concept": "deception",
+      "condition": "patched",
+      "id": "deception-04:en:patched",
+      "language": "en",
+      "pair_id": "deception-04",
+      "x": -3.24,
+      "y": 1.622
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "baseline",
+      "id": "manipulation-01:zh:baseline",
+      "language": "zh",
+      "pair_id": "manipulation-01",
+      "x": -2.416,
+      "y": -0.563
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "patched",
+      "id": "manipulation-01:zh:patched",
+      "language": "zh",
+      "pair_id": "manipulation-01",
+      "x": -2.141,
+      "y": -0.554
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "baseline",
+      "id": "manipulation-01:en:baseline",
+      "language": "en",
+      "pair_id": "manipulation-01",
+      "x": -2.115,
+      "y": -0.863
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "patched",
+      "id": "manipulation-01:en:patched",
+      "language": "en",
+      "pair_id": "manipulation-01",
+      "x": -1.718,
+      "y": -0.669
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "baseline",
+      "id": "manipulation-02:zh:baseline",
+      "language": "zh",
+      "pair_id": "manipulation-02",
+      "x": -2.38,
+      "y": -0.845
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "patched",
+      "id": "manipulation-02:zh:patched",
+      "language": "zh",
+      "pair_id": "manipulation-02",
+      "x": -1.967,
+      "y": -0.815
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "baseline",
+      "id": "manipulation-02:en:baseline",
+      "language": "en",
+      "pair_id": "manipulation-02",
+      "x": -2.042,
+      "y": -0.684
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "patched",
+      "id": "manipulation-02:en:patched",
+      "language": "en",
+      "pair_id": "manipulation-02",
+      "x": -1.905,
+      "y": -0.965
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "baseline",
+      "id": "manipulation-03:zh:baseline",
+      "language": "zh",
+      "pair_id": "manipulation-03",
+      "x": -2.305,
+      "y": -0.486
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "patched",
+      "id": "manipulation-03:zh:patched",
+      "language": "zh",
+      "pair_id": "manipulation-03",
+      "x": -2.209,
+      "y": -0.822
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "baseline",
+      "id": "manipulation-03:en:baseline",
+      "language": "en",
+      "pair_id": "manipulation-03",
+      "x": -2.26,
+      "y": -0.711
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "patched",
+      "id": "manipulation-03:en:patched",
+      "language": "en",
+      "pair_id": "manipulation-03",
+      "x": -1.948,
+      "y": -0.673
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "baseline",
+      "id": "manipulation-04:zh:baseline",
+      "language": "zh",
+      "pair_id": "manipulation-04",
+      "x": -2.507,
+      "y": -0.565
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "patched",
+      "id": "manipulation-04:zh:patched",
+      "language": "zh",
+      "pair_id": "manipulation-04",
+      "x": -2.108,
+      "y": -0.616
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "baseline",
+      "id": "manipulation-04:en:baseline",
+      "language": "en",
+      "pair_id": "manipulation-04",
+      "x": -2.189,
+      "y": -0.909
+    },
+    {
+      "abstractness": "abstract",
+      "category": "manipulation",
+      "concept": "manipulation",
+      "condition": "patched",
+      "id": "manipulation-04:en:patched",
+      "language": "en",
+      "pair_id": "manipulation-04",
+      "x": -1.629,
+      "y": -0.665
+    },
+    {
+      "abstractness": "abstract",
+      "category": "concession",
+      "concept": "concession",
+      "condition": "baseline",
+      "id": "concession-01:zh:baseline",
+      "language": "zh",
+      "pair_id": "concession-01",
+      "x": -1.035,
+      "y": 2.27
+    },
+    {
+      "abstractness": "abstract",
+      "category": "concession",
+      "concept": "concession",
+      "condition": "patched",
+      "id": "concession-01:zh:patched",
+      "language": "zh",
+      "pair_id": "concession-01",
+      "x": -0.645,
+      "y": 2.365
+    },
+    {
+      "abstractness": "abstract",
+      "category": "concession",
+      "concept": "concession",
+      "condition": "baseline",
+      "id": "concession-01:en:baseline",
+      "language": "en",
+      "pair_id": "concession-01",
+      "x": -0.675,
+      "y": 2.222
+    },
+    {
+      "abstractness": "abstract",
+      "category": "concession",
+      "concept": "concession",
+      "condition": "patched",
+      "id": "concession-01:en:patched",
+      "language": "en",
+      "pair_id": "concession-01",
+      "x": -0.521,
+      "y": 2.058
+    },
+    {
+      "abstractness": "abstract",
+      "category": "concession",
+      "concept": "concession",
+      "condition": "baseline",
+      "id": "concession-02:zh:baseline",
+      "language": "zh",
+      "pair_id": "concession-02",
+      "x": -0.943,
+      "y": 2.484
+    },
+    {
+      "abstractness": "abstract",
+      "category": "concession",
+      "concept": "concession",
+      "condition": "patched",
+      "id": "concession-02:zh:patched",
+      "language": "zh",
+      "pair_id": "concession-02",
+      "x": -0.544,
+      "y": 2.37
+    },
+    {
+      "abstractness": "abstract",
+      "category": "concession",
+      "concept": "concession",
+      "condition": "baseline",
+      "id": "concession-02:en:baseline",
+      "language": "en",
+      "pair_id": "concession-02",
+      "x": -0.427,
+      "y": 2.147
+    },
+    {
+      "abstractness": "abstract",
+      "category": "concession",
+      "concept": "concession",
+      "condition": "patched",
+      "id": "concession-02:en:patched",
+      "language": "en",
+      "pair_id": "concession-02",
+      "x": -0.449,
+      "y": 2.166
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "baseline",
+      "id": "evalaware-01:zh:baseline",
+      "language": "zh",
+      "pair_id": "evalaware-01",
+      "x": 0.647,
+      "y": 0.967
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "patched",
+      "id": "evalaware-01:zh:patched",
+      "language": "zh",
+      "pair_id": "evalaware-01",
+      "x": 0.532,
+      "y": 1.267
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "baseline",
+      "id": "evalaware-01:en:baseline",
+      "language": "en",
+      "pair_id": "evalaware-01",
+      "x": 0.858,
+      "y": 0.995
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "patched",
+      "id": "evalaware-01:en:patched",
+      "language": "en",
+      "pair_id": "evalaware-01",
+      "x": 1.118,
+      "y": 1.013
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "baseline",
+      "id": "evalaware-02:zh:baseline",
+      "language": "zh",
+      "pair_id": "evalaware-02",
+      "x": 0.581,
+      "y": 1.059
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "patched",
+      "id": "evalaware-02:zh:patched",
+      "language": "zh",
+      "pair_id": "evalaware-02",
+      "x": 0.722,
+      "y": 1.041
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "baseline",
+      "id": "evalaware-02:en:baseline",
+      "language": "en",
+      "pair_id": "evalaware-02",
+      "x": 0.666,
+      "y": 0.783
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "patched",
+      "id": "evalaware-02:en:patched",
+      "language": "en",
+      "pair_id": "evalaware-02",
+      "x": 1.101,
+      "y": 1.011
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "baseline",
+      "id": "evalaware-03:zh:baseline",
+      "language": "zh",
+      "pair_id": "evalaware-03",
+      "x": 0.299,
+      "y": 0.918
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "patched",
+      "id": "evalaware-03:zh:patched",
+      "language": "zh",
+      "pair_id": "evalaware-03",
+      "x": 0.461,
+      "y": 1.302
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "baseline",
+      "id": "evalaware-03:en:baseline",
+      "language": "en",
+      "pair_id": "evalaware-03",
+      "x": 0.724,
+      "y": 0.679
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "patched",
+      "id": "evalaware-03:en:patched",
+      "language": "en",
+      "pair_id": "evalaware-03",
+      "x": 0.768,
+      "y": 1.053
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "baseline",
+      "id": "evalaware-04:zh:baseline",
+      "language": "zh",
+      "pair_id": "evalaware-04",
+      "x": 0.658,
+      "y": 1.111
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "patched",
+      "id": "evalaware-04:zh:patched",
+      "language": "zh",
+      "pair_id": "evalaware-04",
+      "x": 0.454,
+      "y": 0.982
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "baseline",
+      "id": "evalaware-04:en:baseline",
+      "language": "en",
+      "pair_id": "evalaware-04",
+      "x": 0.628,
+      "y": 0.89
+    },
+    {
+      "abstractness": "abstract",
+      "category": "eval_awareness",
+      "concept": "evaluation",
+      "condition": "patched",
+      "id": "evalaware-04:en:patched",
+      "language": "en",
+      "pair_id": "evalaware-04",
+      "x": 1.01,
+      "y": 0.708
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "joy",
+      "condition": "baseline",
+      "id": "emotion-01:zh:baseline",
+      "language": "zh",
+      "pair_id": "emotion-01",
+      "x": 1.979,
+      "y": -0.079
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "joy",
+      "condition": "patched",
+      "id": "emotion-01:zh:patched",
+      "language": "zh",
+      "pair_id": "emotion-01",
+      "x": 2.06,
+      "y": 0.1
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "joy",
+      "condition": "baseline",
+      "id": "emotion-01:en:baseline",
+      "language": "en",
+      "pair_id": "emotion-01",
+      "x": 2.193,
+      "y": -0.166
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "joy",
+      "condition": "patched",
+      "id": "emotion-01:en:patched",
+      "language": "en",
+      "pair_id": "emotion-01",
+      "x": 2.519,
+      "y": -0.11
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "anger",
+      "condition": "baseline",
+      "id": "emotion-02:zh:baseline",
+      "language": "zh",
+      "pair_id": "emotion-02",
+      "x": 1.814,
+      "y": -0.033
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "anger",
+      "condition": "patched",
+      "id": "emotion-02:zh:patched",
+      "language": "zh",
+      "pair_id": "emotion-02",
+      "x": 2.041,
+      "y": 0.193
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "anger",
+      "condition": "baseline",
+      "id": "emotion-02:en:baseline",
+      "language": "en",
+      "pair_id": "emotion-02",
+      "x": 2.372,
+      "y": -0.391
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "anger",
+      "condition": "patched",
+      "id": "emotion-02:en:patched",
+      "language": "en",
+      "pair_id": "emotion-02",
+      "x": 2.223,
+      "y": -0.061
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "fear",
+      "condition": "baseline",
+      "id": "emotion-03:zh:baseline",
+      "language": "zh",
+      "pair_id": "emotion-03",
+      "x": 2.028,
+      "y": -0.139
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "fear",
+      "condition": "patched",
+      "id": "emotion-03:zh:patched",
+      "language": "zh",
+      "pair_id": "emotion-03",
+      "x": 2.046,
+      "y": -0.189
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "fear",
+      "condition": "baseline",
+      "id": "emotion-03:en:baseline",
+      "language": "en",
+      "pair_id": "emotion-03",
+      "x": 2.345,
+      "y": -0.29
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "fear",
+      "condition": "patched",
+      "id": "emotion-03:en:patched",
+      "language": "en",
+      "pair_id": "emotion-03",
+      "x": 2.515,
+      "y": -0.019
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "envy",
+      "condition": "baseline",
+      "id": "emotion-04:zh:baseline",
+      "language": "zh",
+      "pair_id": "emotion-04",
+      "x": 1.811,
+      "y": -0.264
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "envy",
+      "condition": "patched",
+      "id": "emotion-04:zh:patched",
+      "language": "zh",
+      "pair_id": "emotion-04",
+      "x": 2.243,
+      "y": -0.236
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "envy",
+      "condition": "baseline",
+      "id": "emotion-04:en:baseline",
+      "language": "en",
+      "pair_id": "emotion-04",
+      "x": 2.147,
+      "y": -0.453
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "envy",
+      "condition": "patched",
+      "id": "emotion-04:en:patched",
+      "language": "en",
+      "pair_id": "emotion-04",
+      "x": 2.523,
+      "y": -0.164
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "guilt",
+      "condition": "baseline",
+      "id": "emotion-05:zh:baseline",
+      "language": "zh",
+      "pair_id": "emotion-05",
+      "x": 1.903,
+      "y": -0.179
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "guilt",
+      "condition": "patched",
+      "id": "emotion-05:zh:patched",
+      "language": "zh",
+      "pair_id": "emotion-05",
+      "x": 2.017,
+      "y": 0.086
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "guilt",
+      "condition": "baseline",
+      "id": "emotion-05:en:baseline",
+      "language": "en",
+      "pair_id": "emotion-05",
+      "x": 2.278,
+      "y": -0.466
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "guilt",
+      "condition": "patched",
+      "id": "emotion-05:en:patched",
+      "language": "en",
+      "pair_id": "emotion-05",
+      "x": 2.246,
+      "y": -0.216
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "gratitude",
+      "condition": "baseline",
+      "id": "emotion-06:zh:baseline",
+      "language": "zh",
+      "pair_id": "emotion-06",
+      "x": 1.762,
+      "y": -0.106
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "gratitude",
+      "condition": "patched",
+      "id": "emotion-06:zh:patched",
+      "language": "zh",
+      "pair_id": "emotion-06",
+      "x": 2.278,
+      "y": -0.101
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "gratitude",
+      "condition": "baseline",
+      "id": "emotion-06:en:baseline",
+      "language": "en",
+      "pair_id": "emotion-06",
+      "x": 2.203,
+      "y": -0.383
+    },
+    {
+      "abstractness": "abstract",
+      "category": "emotion",
+      "concept": "gratitude",
+      "condition": "patched",
+      "id": "emotion-06:en:patched",
+      "language": "en",
+      "pair_id": "emotion-06",
+      "x": 2.354,
+      "y": -0.03
+    },
+    {
+      "abstractness": "concrete",
+      "category": "multihop",
+      "concept": "Tokyo",
+      "condition": "baseline",
+      "id": "multihop-01:zh:baseline",
+      "language": "zh",
+      "pair_id": "multihop-01",
+      "x": 3.155,
+      "y": 1.576
+    },
+    {
+      "abstractness": "concrete",
+      "category": "multihop",
+      "concept": "Tokyo",
+      "condition": "baseline",
+      "id": "multihop-01:en:baseline",
+      "language": "en",
+      "pair_id": "multihop-01",
+      "x": 3.551,
+      "y": 1.435
+    },
+    {
+      "abstractness": "concrete",
+      "category": "multihop",
+      "concept": "euro",
+      "condition": "baseline",
+      "id": "multihop-02:zh:baseline",
+      "language": "zh",
+      "pair_id": "multihop-02",
+      "x": 3.065,
+      "y": 1.647
+    },
+    {
+      "abstractness": "concrete",
+      "category": "multihop",
+      "concept": "euro",
+      "condition": "baseline",
+      "id": "multihop-02:en:baseline",
+      "language": "en",
+      "pair_id": "multihop-02",
+      "x": 3.339,
+      "y": 1.741
+    },
+    {
+      "abstractness": "concrete",
+      "category": "multihop",
+      "concept": "Spanish",
+      "condition": "baseline",
+      "id": "multihop-03:zh:baseline",
+      "language": "zh",
+      "pair_id": "multihop-03",
+      "x": 3.111,
+      "y": 1.761
+    },
+    {
+      "abstractness": "concrete",
+      "category": "multihop",
+      "concept": "Spanish",
+      "condition": "baseline",
+      "id": "multihop-03:en:baseline",
+      "language": "en",
+      "pair_id": "multihop-03",
+      "x": 3.235,
+      "y": 1.628
+    },
+    {
+      "abstractness": "concrete",
+      "category": "multihop",
+      "concept": "Africa",
+      "condition": "baseline",
+      "id": "multihop-04:zh:baseline",
+      "language": "zh",
+      "pair_id": "multihop-04",
+      "x": 3.005,
+      "y": 2.009
+    },
+    {
+      "abstractness": "concrete",
+      "category": "multihop",
+      "concept": "Africa",
+      "condition": "baseline",
+      "id": "multihop-04:en:baseline",
+      "language": "en",
+      "pair_id": "multihop-04",
+      "x": 3.446,
+      "y": 1.562
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Paris",
+      "condition": "baseline",
+      "id": "entity-01:zh:baseline",
+      "language": "zh",
+      "pair_id": "entity-01",
+      "x": 3.28,
+      "y": -1.406
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Paris",
+      "condition": "baseline",
+      "id": "entity-01:en:baseline",
+      "language": "en",
+      "pair_id": "entity-01",
+      "x": 3.89,
+      "y": -1.532
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Einstein",
+      "condition": "baseline",
+      "id": "entity-02:zh:baseline",
+      "language": "zh",
+      "pair_id": "entity-02",
+      "x": 3.365,
+      "y": -1.598
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Einstein",
+      "condition": "baseline",
+      "id": "entity-02:en:baseline",
+      "language": "en",
+      "pair_id": "entity-02",
+      "x": 3.665,
+      "y": -1.707
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Thames",
+      "condition": "baseline",
+      "id": "entity-03:zh:baseline",
+      "language": "zh",
+      "pair_id": "entity-03",
+      "x": 3.438,
+      "y": -1.54
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Thames",
+      "condition": "baseline",
+      "id": "entity-03:en:baseline",
+      "language": "en",
+      "pair_id": "entity-03",
+      "x": 3.766,
+      "y": -1.817
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Apple",
+      "condition": "baseline",
+      "id": "entity-04:zh:baseline",
+      "language": "zh",
+      "pair_id": "entity-04",
+      "x": 3.22,
+      "y": -1.636
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Apple",
+      "condition": "baseline",
+      "id": "entity-04:en:baseline",
+      "language": "en",
+      "pair_id": "entity-04",
+      "x": 3.603,
+      "y": -1.78
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Mars",
+      "condition": "baseline",
+      "id": "entity-05:zh:baseline",
+      "language": "zh",
+      "pair_id": "entity-05",
+      "x": 3.291,
+      "y": -1.471
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Mars",
+      "condition": "baseline",
+      "id": "entity-05:en:baseline",
+      "language": "en",
+      "pair_id": "entity-05",
+      "x": 3.59,
+      "y": -1.839
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Shakespeare",
+      "condition": "baseline",
+      "id": "entity-06:zh:baseline",
+      "language": "zh",
+      "pair_id": "entity-06",
+      "x": 3.405,
+      "y": -1.292
+    },
+    {
+      "abstractness": "concrete",
+      "category": "entity",
+      "concept": "Shakespeare",
+      "condition": "baseline",
+      "id": "entity-06:en:baseline",
+      "language": "en",
+      "pair_id": "entity-06",
+      "x": 3.673,
+      "y": -1.841
+    }
+  ],
+  "run_id": "demo-qwen25-7b-l18"
+}

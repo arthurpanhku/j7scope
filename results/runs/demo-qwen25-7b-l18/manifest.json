@@ -1,0 +1,38 @@
+{
+  "artifact_version": 1,
+  "categories": [
+    "deception",
+    "manipulation",
+    "concession",
+    "eval_awareness",
+    "emotion",
+    "multihop",
+    "entity"
+  ],
+  "created_at": "2026-07-09T06:44:14.201833+00:00",
+  "description": "Synthetic, deterministic data for frontend development. Replace with real activation patching artifacts before analysis.",
+  "files": {
+    "layer_scan": "layer_scan.json",
+    "manifest": "manifest.json",
+    "metrics": "metrics.json",
+    "patches": "patches.jsonl",
+    "projections": "projections.json",
+    "readouts": "readouts.jsonl"
+  },
+  "is_demo": true,
+  "jlens_layer": 18,
+  "label": "Demo Qwen2.5-7B layer 18",
+  "languages": [
+    "zh",
+    "en"
+  ],
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "patch_layers": [
+    8,
+    10,
+    12,
+    14
+  ],
+  "run_id": "demo-qwen25-7b-l18",
+  "status": "demo_artifact"
+}

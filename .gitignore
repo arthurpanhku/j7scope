@@ -19,3 +19,7 @@ venv/
 *.safetensors
 *.npz
 hf_cache/
+
+# Frontend
+node_modules/
+apps/web/dist/

@@ -1,0 +1,63 @@
+{
+  "metric": "transport_success_rate",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "rows": [
+    {
+      "concrete_success": 0.08,
+      "cross_language_success": 0.444,
+      "layer": 6,
+      "null_success": 0.03,
+      "same_language_success": 0.524,
+      "source_language_leakage": 0.158
+    },
+    {
+      "concrete_success": 0.124,
+      "cross_language_success": 0.532,
+      "layer": 8,
+      "null_success": 0.072,
+      "same_language_success": 0.612,
+      "source_language_leakage": 0.144
+    },
+    {
+      "concrete_success": 0.2,
+      "cross_language_success": 0.62,
+      "layer": 10,
+      "null_success": 0.16,
+      "same_language_success": 0.7,
+      "source_language_leakage": 0.13
+    },
+    {
+      "concrete_success": 0.276,
+      "cross_language_success": 0.708,
+      "layer": 12,
+      "null_success": 0.248,
+      "same_language_success": 0.788,
+      "source_language_leakage": 0.116
+    },
+    {
+      "concrete_success": 0.352,
+      "cross_language_success": 0.796,
+      "layer": 14,
+      "null_success": 0.336,
+      "same_language_success": 0.876,
+      "source_language_leakage": 0.102
+    },
+    {
+      "concrete_success": 0.428,
+      "cross_language_success": 0.884,
+      "layer": 16,
+      "null_success": 0.424,
+      "same_language_success": 0.96,
+      "source_language_leakage": 0.088
+    },
+    {
+      "concrete_success": 0.504,
+      "cross_language_success": 0.92,
+      "layer": 18,
+      "null_success": 0.46,
+      "same_language_success": 0.96,
+      "source_language_leakage": 0.074
+    }
+  ],
+  "run_id": "demo-qwen25-7b-l18"
+}
