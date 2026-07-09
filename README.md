@@ -86,10 +86,14 @@ tvinnhugr/
 │   └── concept_taxonomy.md    # 抽象/具体概念分类，服务 M3
 ├── tvinnhugr/
 │   ├── data.py                # 语料加载与配对
+│   ├── artifacts.py           # 实验 run 的 JSON/JSONL 导出契约
 │   ├── fitting.py             # J-lens 拟合，适配 Qwen2.5 等稠密模型
 │   ├── patching.py            # M2 的跨语言 activation patching
 │   ├── metrics.py             # CKA / SVCCA / overlap 计算
 │   └── viz.py                 # 双语对照的读出可视化页面
+├── experiments/
+│   └── build_demo_run.py      # 生成前端开发用 demo artifact（非真实实验）
+├── apps/web/                  # React/Vite J-Space Explorer
 ├── notebooks/
 │   └── walkthrough_zh_en.ipynb
 └── results/                   # 跑出来的图表和数据
@@ -116,6 +120,33 @@ h_zh = jlens.collect_residual(pairs["deception-01"]["zh"]["text"])
 h_en = jlens.collect_residual(pairs["deception-01"]["en"]["text"])
 print(jlens.readout(h_zh), jlens.readout(h_en))  # 两种语言的读出一致吗？
 ```
+
+### 5.1 J-Space Explorer 前端
+
+前端读取 `results/runs/<run_id>/` 下的一组稳定 artifact：
+
+- `manifest.json`：模型、层、语言、类别、artifact 版本
+- `readouts.jsonl`：每个 zh/en probe 的原始 J-lens top-k
+- `patches.jsonl`：M2 activation patching 的概念迁移、语言保持、对照组结果
+- `projections.json`：Python 侧预计算的 2D/3D J-space 坐标
+- `layer_scan.json`：不同 patch layer 的成功率曲线
+- `metrics.json`：run 级摘要指标
+
+本地开发可以先生成一个明确标记为 demo 的假数据 run（不代表实验结论）：
+
+```bash
+python3 experiments/build_demo_run.py
+cd apps/web
+npm install
+npm run dev -- --port 5173
+```
+
+打开 `http://127.0.0.1:5173/` 后可以查看：
+
+- **Patching Matrix**：跨语言概念迁移与 random/unrelated 对照
+- **Pair Explorer**：单个 prompt pair 的原始 readout、patched readout、next-token sanity channel
+- **J-Space Map**：中英 readout/projection 的二维分布
+- **Layer Scan**：共享信号随 patch layer 的变化
 
 ## 6. 路线图
 

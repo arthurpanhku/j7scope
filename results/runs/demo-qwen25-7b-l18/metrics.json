@@ -1,0 +1,15 @@
+{
+  "primary_patch_layer": 12,
+  "run_id": "demo-qwen25-7b-l18",
+  "summary": {
+    "abstract_cross_language_success": 1.0,
+    "concrete_cross_language_success": 0.0,
+    "cross_language_success": 0.667,
+    "language_preservation": 1.0,
+    "mean_null_gap": 0.379,
+    "null_success": 0.333,
+    "pairs": 30,
+    "patches": 960,
+    "readouts": 60
+  }
+}
