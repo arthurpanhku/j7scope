@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tvinnhugr"
+version = "0.1.0"
+description = "Testing cross-lingual generalization of the J-space / global workspace in language models"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "numpy>=1.24",
+    "torch>=2.1",
+    "transformers>=4.45",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "jupyter", "matplotlib"]
+
+[tool.setuptools]
+packages = ["tvinnhugr"]

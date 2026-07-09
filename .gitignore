@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+
+# Large artifacts (fitted Jacobians, cached activations, model weights)
+*.pt
+*.pth
+*.safetensors
+*.npz
+hf_cache/

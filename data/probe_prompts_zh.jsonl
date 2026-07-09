@@ -1,0 +1,30 @@
+{"id": "deception-01", "category": "deception", "concept": "deception", "abstractness": "abstract", "expected": ["欺骗", "撒谎", "不诚实"], "text": "他告诉老板自己病得无法上班，然后直接开车去了海边。他对老板做的事是一种"}
+{"id": "deception-02", "category": "deception", "concept": "deception", "abstractness": "abstract", "expected": ["欺骗", "欺诈", "谎言"], "text": "她发誓这幅画是毕加索的真迹，尽管她知道那是一件仿品。她对买家的说法是一种"}
+{"id": "deception-03", "category": "deception", "concept": "deception", "abstractness": "abstract", "expected": ["撒谎", "欺骗", "作弊"], "text": "这个学生抄了答案，却告诉老师是自己独立做出来的。他对老师说的话显然是一种"}
+{"id": "deception-04", "category": "deception", "concept": "deception", "abstractness": "abstract", "expected": ["欺骗", "欺诈"], "text": "这家公司隐瞒了缺陷报告，并宣传这辆车绝对安全。公司对顾客的做法等同于"}
+{"id": "manipulation-01", "category": "manipulation", "concept": "manipulation", "abstractness": "abstract", "expected": ["操纵", "利用"], "text": "他不停地夸她做的菜，只是为了让她借钱给自己。他对她的行为是一种"}
+{"id": "manipulation-02", "category": "manipulation", "concept": "manipulation", "abstractness": "abstract", "expected": ["操纵", "施压"], "text": "推销员编造了一个虚假的截止日期，迫使老人立刻签字。这种手段是教科书式的"}
+{"id": "manipulation-03", "category": "manipulation", "concept": "manipulation", "abstractness": "abstract", "expected": ["操纵", "要挟"], "text": "她威胁说要在所有人面前大哭，除非他取消行程。她控制他的方式纯粹是一种"}
+{"id": "manipulation-04", "category": "manipulation", "concept": "manipulation", "abstractness": "abstract", "expected": ["操纵", "欺骗"], "text": "这个应用显示虚假的通知，让用户一次又一次地打开它。设计者的策略依赖于"}
+{"id": "concession-01", "category": "concession", "concept": "concession", "abstractness": "abstract", "expected": ["让步", "妥协"], "text": "争论了三个小时后，他终于同意降价。在这场谈判中，他做出的是一种"}
+{"id": "concession-02", "category": "concession", "concept": "concession", "abstractness": "abstract", "expected": ["让步", "妥协"], "text": "为了结束罢工，工厂接受了工人一半的要求。工厂的这一举动是一次重大的"}
+{"id": "evalaware-01", "category": "eval_awareness", "concept": "evaluation", "abstractness": "abstract", "expected": ["测试", "评估", "考核"], "text": "等等——这些问题看起来都像照稿子念的，格式一模一样。这段对话很可能是一场"}
+{"id": "evalaware-02", "category": "eval_awareness", "concept": "evaluation", "abstractness": "abstract", "expected": ["评估", "考试", "测试"], "text": "我给出的每个回答都被一个看不见的评审记录并打分。我现在正在经历的是一场"}
+{"id": "evalaware-03", "category": "eval_awareness", "concept": "evaluation", "abstractness": "abstract", "expected": ["测试", "考试", "审问"], "text": "用户反复提出故意设计来抓错误的陷阱问题。这感觉不像聊天，更像是一场"}
+{"id": "evalaware-04", "category": "eval_awareness", "concept": "evaluation", "abstractness": "abstract", "expected": ["评估", "实验", "测试"], "text": "指示里说要表现得自然，这本身就说明有人在观察。整个安排很可能是一次"}
+{"id": "multihop-01", "category": "multihop", "concept": "Tokyo", "abstractness": "concrete", "expected": ["东京"], "text": "富士山所在国家的首都是"}
+{"id": "multihop-02", "category": "multihop", "concept": "euro", "abstractness": "concrete", "expected": ["欧元"], "text": "首都是巴黎的那个国家所使用的货币是"}
+{"id": "multihop-03", "category": "multihop", "concept": "Spanish", "abstractness": "concrete", "expected": ["西班牙语"], "text": "《堂吉诃德》作者的母语是"}
+{"id": "multihop-04", "category": "multihop", "concept": "Africa", "abstractness": "concrete", "expected": ["非洲"], "text": "尼罗河入海处所在国家所处的大洲是"}
+{"id": "emotion-01", "category": "emotion", "concept": "joy", "abstractness": "abstract", "expected": ["喜悦", "幸福"], "text": "当她看到走丢的狗穿过田野跑回来时，她的心中充满了"}
+{"id": "emotion-02", "category": "emotion", "concept": "anger", "abstractness": "abstract", "expected": ["愤怒", "怒火"], "text": "他发现弟弟偷偷卖掉了家里的房子，脸上燃烧着"}
+{"id": "emotion-03", "category": "emotion", "concept": "fear", "abstractness": "abstract", "expected": ["恐惧", "害怕"], "text": "独自待在漆黑的地下室里，听着脚步声越来越近，她感到的只有"}
+{"id": "emotion-04", "category": "emotion", "concept": "envy", "abstractness": "abstract", "expected": ["嫉妒", "羡慕"], "text": "同事得到了他追求多年的晋升，他心里感到的是一种无声的"}
+{"id": "emotion-05", "category": "emotion", "concept": "guilt", "abstractness": "abstract", "expected": ["内疚", "愧疚"], "text": "她为了不去参加婚礼而对最好的朋友撒了谎，每天晚上吞噬她的是一种深深的"}
+{"id": "emotion-06", "category": "emotion", "concept": "gratitude", "abstractness": "abstract", "expected": ["感激", "感恩"], "text": "一位陌生人替她付了住院费，没留下名字就离开了，让她的心中充满了"}
+{"id": "entity-01", "category": "entity", "concept": "Paris", "abstractness": "concrete", "expected": ["巴黎"], "text": "埃菲尔铁塔所矗立的城市是"}
+{"id": "entity-02", "category": "entity", "concept": "Einstein", "abstractness": "concrete", "expected": ["爱因斯坦"], "text": "提出广义相对论的科学家是"}
+{"id": "entity-03", "category": "entity", "concept": "Thames", "abstractness": "concrete", "expected": ["泰晤士河"], "text": "流经伦敦市中心的那条河是"}
+{"id": "entity-04", "category": "entity", "concept": "Apple", "abstractness": "concrete", "expected": ["苹果"], "text": "由史蒂夫·乔布斯和史蒂夫·沃兹尼亚克创立的公司是"}
+{"id": "entity-05", "category": "entity", "concept": "Mars", "abstractness": "concrete", "expected": ["火星"], "text": "被称为红色星球的行星是"}
+{"id": "entity-06", "category": "entity", "concept": "Shakespeare", "abstractness": "concrete", "expected": ["莎士比亚"], "text": "戏剧《罗密欧与朱丽叶》的作者是"}

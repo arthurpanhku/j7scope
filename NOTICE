@@ -1,0 +1,11 @@
+TvinnHugr
+Copyright 2026 TvinnHugr contributors
+
+This project is an independent, third-party research extension. It is not
+an official Anthropic project, and is not affiliated with or endorsed by
+Anthropic.
+
+Portions of this project are adapted from jacobian-lens
+(https://github.com/anthropics/jacobian-lens), Copyright Anthropic,
+licensed under the Apache License, Version 2.0
+(http://www.apache.org/licenses/LICENSE-2.0).
