@@ -256,6 +256,61 @@ Apache-2.0（见 [LICENSE](LICENSE)）。fitting 逻辑基于 [`anthropics/jacob
 >
 > **J7Scope is an independent third-party research extension. It is not an official Anthropic project, and is not affiliated with or endorsed by Anthropic.**
 
+## 11. 名词解释（Glossary）
+
+本项目在研究与前端里反复出现的术语，一句话速查：
+
+| 术语 | 一句话解释 |
+|---|---|
+| **J-lens**（Jacobian lens） | 把中间层残差流经"期望 Jacobian"线性映射到末层坐标、再用模型自己的 unembedding 解码，读出模型"倾向于说但还没说"的概念。 |
+| **J-space** | J-lens 能读出的方向构成的稀疏子空间（约占激活方差 6–10%），功能上对应"全局工作空间"。 |
+| **全局工作空间**（Global Workspace） | 认知科学概念：信息被"广播"到一个全局空间供各模块读写；论文借它类比 J-space。 |
+| **残差流**（residual stream, `h_l`） | Transformer 各层之间累加流动的隐藏状态；J-lens 读出的输入就是第 `l` 层的 `h_l`。 |
+| **Jacobian**（`J_l`） | 末层输出对第 `l` 层残差的期望偏导（一个线性映射）；它是**模型的属性、与语言无关**，只拟合一次。 |
+| **Unembedding / lm_head** | 把隐藏向量投回词表 logits 的输出矩阵；读出用它把映射后的向量解码成 token。 |
+| **Logit lens** | 直接用 unembedding 解中间层的更早方法；J-lens 是其"先经 Jacobian 传播再解码"的改良版。 |
+| **读出**（read-out） | 某位置的 `h_l` 经 J-lens 得到的 top-k token / 概念列表。 |
+| **概念空间 / 概念词典**（concept space / lexicon） | 把 zh/en 表层 token（"欺骗" vs "deception"）映到同一个概念，才能跨语言比较。 |
+| **Sharedness** | 观测重叠相对 null 基线与同语言上界的归一化"跨语言共享分"，附带置信区间（CI）。 |
+| **Null 基线**（shuffled-pairing null） | 把配对打乱得到的机会水平；读出必须**越过 null 带**才算真信号（详见 §6.4 的统计陷阱）。 |
+| **Top-k 重叠率**（overlap） | 两个读出 / 概念集合的重叠系数，最直观的相似度指标。 |
+| **CKA / SVCCA** | 两组表示方向的相似度指标；样本数 ≪ 维度时基线偏高，必须与 null 一起报告。 |
+| **Activation patching** | 把一处的激活"移植"进另一次前向传播，看输出跟随**概念**还是**来源语言**——比相关性更强的因果证据。 |
+| **Cloze 探针** | 末尾留空的填空式 prompt（"……是一种___"），在最后一个 token 位置读出。 |
+| **Trace / Replay / Compare** | 本平台的三件套：一次会话录制成的可引用产物 / 逐 token 回放 / 双语并排对齐。 |
+| **Intra-token vs Cross-trace rigor** | 同一次读出内 zh/en 是否一致 vs 两条不同语言会话在对齐位置是否一致（后者是更强的跨语言信号）。 |
+| **Sidecar** | 旁挂在 agent harness 与开源模型之间的 OpenAI 兼容代理，负责读出并旁路显示 J-space。 |
+| **H1 / H2 / H3** | 三种互斥假设：语言无关（共享）/ 语言特异（不重叠）/ 分级（抽象共享、具体绑定）。 |
+| **稠密 transformer vs MoE** | 稠密结构便于 Jacobian 计算，故本项目优先选稠密开源模型（Qwen2.5 等）。 |
+
+## 12. 延伸阅读 / 参考材料
+
+想深入了解相关术语，推荐从这些材料入手（★ = 本项目直接依赖或复现）：
+
+**J-space / 全局工作空间（核心）**
+- ★ Anthropic, *Verbalizable Representations Form a Global Workspace in Language Models* (2026) —— J-lens 与 J-space 的原始论文：<https://transformer-circuits.pub/2026/workspace/index.html>
+- ★ 官方参考实现 `anthropics/jacobian-lens`（Apache-2.0，不维护）：<https://github.com/anthropics/jacobian-lens>
+- 认知科学背景：Global Workspace Theory（Baars 1988；Dehaene & Changeux 2011）—— 概览见 <https://en.wikipedia.org/wiki/Global_workspace_theory>
+
+**读出方法（logit/Jacobian lens）**
+- Logit lens（nostalgebraist, 2020），J-lens 的思想前身：<https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens>
+
+**表示相似度指标**
+- ★ CKA —— Kornblith et al., *Similarity of Neural Network Representations Revisited* (2019): <https://arxiv.org/abs/1905.00414>
+- ★ SVCCA —— Raghu et al. (2017): <https://arxiv.org/abs/1706.05806>
+
+**因果验证（activation patching）**
+- ROME / causal tracing —— Meng et al., *Locating and Editing Factual Associations in GPT* (2022): <https://arxiv.org/abs/2202.05262>
+- 方法学：*Towards Best Practices of Activation Patching in Language Models*（Zhang & Nanda, 2023 —— arXiv 上按标题可搜到）
+
+**工具与平台**
+- TransformerLens（模型内部访问/干预）：<https://github.com/TransformerLensOrg/TransformerLens>
+- nnsight（远程/本地模型内部干预）：<https://nnsight.net>
+- Neuronpedia（可解释性可视化平台，本项目"预计算 + 浏览"思路的参照）：<https://neuronpedia.org>
+- 主力模型 Qwen2.5-7B-Instruct：<https://huggingface.co/Qwen/Qwen2.5-7B-Instruct>
+
+> 项目内部对严谨层的完整定义另见站内 **[Methodology](https://arthurpanhku.me/j7scope/method.html)** 页；指标实现集中在 [`j7scope/rigor.py`](j7scope/rigor.py) 与 [`j7scope/metrics.py`](j7scope/metrics.py)。
+
 ---
 
 ## English summary
