@@ -93,6 +93,10 @@ python -m j7scope_serve --backend hf \
 - **opencode** —— provider 配置 + 可选插件，见 [`apps/serve/integrations/opencode/`](apps/serve/integrations/opencode/)。
 - **codex / 其它 OpenAI 兼容 harness** —— 把 provider 的 `base_url` 指向 `http://127.0.0.1:8799/v1`，用视图页显示即可。侧信道与 harness 无关，任何客户端都能用，只有便利插件是 opencode 专属的。
 
+把 opencode 的 provider 指向 sidecar 后（左，**真实 opencode 会话**：`opencode.json` + `opencode run` + 插件日志 + 模型回复），右侧 J-Space 视图会随同一次生成逐 token 点亮。下图为 `DEMO` 后端（合成读出）；接开源模型时同一界面显示真实读出。
+
+<p align="center"><img src="docs/screenshots/opencode.png" width="900" alt="opencode driving the j7scope sidecar; the live J-Space view lights up token by token" /></p>
+
 侧信道每个 token 发一条事件（schema 见 [`protocol.py`](apps/serve/j7scope_serve/protocol.py)），`zh` / `en` 两列来自**同一个** J-lens 读出、按字符集拆分 —— 两列在同一个概念上同时点亮，就是这个 workspace 方向跨语言共享的实时证据。完整说明见 [`apps/serve/README.md`](apps/serve/README.md)。
 
 > **一句话定位：** 独立复现并扩展 Anthropic 的全局工作空间研究，检验模型内部的"思维空间"在中英双语下是否共享同一套概念表示；并把这套读出做成一个可以旁挂在任意开源模型 agent 上的实时工具。
