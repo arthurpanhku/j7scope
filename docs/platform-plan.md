@@ -171,6 +171,16 @@ traces/<trace_id>/
   - **同一次租卡顺带跑 M1**：CKA/SVCCA + top-k 重叠 + null 基线，产出研究侧第一批数字（README §9 的 M1 勾选项）。
 - **验收**：gallery 出现带 DOI 的真实 trace；`CITATION.cff` 可被 GitHub "Cite this repository" 识别；M1 首批相关性数字入 `results/`。
 
+> **CPU 小模型预演结论（2026-07，[`experiments/capture_small.py`](../experiments/capture_small.py)）。**
+> 在本机 CPU 上用 Qwen2.5-0.5B-Instruct 真跑通了整条 `hf` 流水线（并借此修掉了
+> [`fitting.py`](../j7scope/fitting.py) `_Capture` 对新版 transformers 张量输出的一个真实 bug）。
+> **但读出是噪声** —— 即便在 J 拟合的 in-distribution cloze 位置，top-k 也是无意义
+> 的碎 token（`WaitForSeconds`、`.ToDecimal`、`闹`…）。原因是：(1) 随机 Jacobian 估计
+> 严重欠采样（512 个样本估 896×896 矩阵，需要数千以上），(2) 0.5B 的 workspace 本就弱。
+> **含义：小模型 + CPU 可行预算下没有信号，这不是平台问题，正是 P3 需要 GPU + 更大模型的实证理由。**
+> **P3 前置动作**：先按 `estimate_jacobian` 的 TODO，用 `torch.func.jacrev` 精确 Jacobian
+> 和上游 `anthropics/jacobian-lens` 在一个已知案例上校验拟合数学，确认 7B 跑出来的是信号而非噪声，再租卡。
+
 ### P4 · Colab 采集笔记本 + 社区提交流程
 
 - **目标**：把 GPU 成本外包给社区，形成 trace 供给。

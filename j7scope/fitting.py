@@ -52,11 +52,16 @@ class _Capture:
         self.value = None
 
     def __call__(self, module, args, output):
-        h = output[0]
+        # Decoder layers return either a bare hidden-states tensor (transformers
+        # >= ~4.50 for Qwen2/Llama) or a (hidden_states, ...) tuple (older). Handle
+        # both, and preserve the shape of what we return so the next layer gets
+        # the same type it expected.
+        is_tuple = isinstance(output, tuple)
+        h = output[0] if is_tuple else output
         if torch.is_grad_enabled() and not h.requires_grad:
             h = h.detach().requires_grad_(True)
             self.value = h
-            return (h,) + tuple(output[1:])
+            return ((h,) + tuple(output[1:])) if is_tuple else h
         self.value = h
         return output
 
