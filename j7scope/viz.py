@@ -11,7 +11,7 @@ from pathlib import Path
 
 _PAGE = """<!doctype html>
 <meta charset="utf-8">
-<title>TvinnHugr — zh/en J-lens readouts</title>
+<title>J7Scope — zh/en J-lens readouts</title>
 <style>
   body {{ font: 14px/1.5 -apple-system, "Segoe UI", sans-serif; margin: 2rem; color: #222; }}
   table {{ border-collapse: collapse; width: 100%; }}
@@ -22,7 +22,7 @@ _PAGE = """<!doctype html>
           padding: 0 .35em; margin: .1em .15em; font-family: ui-monospace, monospace; }}
   .overlap {{ font-weight: 600; text-align: center; }}
 </style>
-<h1>TvinnHugr — bilingual J-lens readouts</h1>
+<h1>J7Scope — bilingual J-lens readouts</h1>
 <table>
 <tr><th>id / concept</th><th>zh</th><th>en</th><th>overlap</th></tr>
 {rows}

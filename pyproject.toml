@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tvinnhugr"
+name = "j7scope"
 version = "0.1.0"
 description = "Testing cross-lingual generalization of the J-space / global workspace in language models"
 readme = "README.md"
@@ -20,4 +20,4 @@ dependencies = [
 dev = ["pytest", "jupyter", "matplotlib"]
 
 [tool.setuptools]
-packages = ["tvinnhugr"]
+packages = ["j7scope"]

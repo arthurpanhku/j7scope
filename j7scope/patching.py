@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import torch
 
-from tvinnhugr.fitting import JLens, _decoder_layers, capture_residual
+from j7scope.fitting import JLens, _decoder_layers, capture_residual
 
 
 def patch_and_readout(jlens: JLens, src_prompt: str, tgt_prompt: str,

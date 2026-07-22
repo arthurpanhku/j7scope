@@ -18,8 +18,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tvinnhugr.artifacts import RUN_FILES, write_json, write_run
-from tvinnhugr.data import load_parallel_pairs
+from j7scope.artifacts import RUN_FILES, write_json, write_run
+from j7scope.data import load_parallel_pairs
 
 
 CATEGORY_ORDER = [

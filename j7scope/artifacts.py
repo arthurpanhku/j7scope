@@ -1,4 +1,4 @@
-"""Stable artifact schema for TvinnHugr experiment runs.
+"""Stable artifact schema for J7Scope experiment runs.
 
 The frontend should never depend on notebook state, Python objects, or raw
 tensor files. Experiment scripts write a small set of JSON/JSONL files through

@@ -1,0 +1,20 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "j7scope": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "J7Scope Sidecar",
+      "options": {
+        "baseURL": "http://127.0.0.1:8799/v1"
+      },
+      "models": {
+        "j7scope-mock": {
+          "name": "J7Scope Mock (demo read-out)"
+        },
+        "Qwen/Qwen2.5-7B-Instruct": {
+          "name": "Qwen2.5-7B via J7Scope (live J-Space)"
+        }
+      }
+    }
+  }
+}

@@ -7,7 +7,7 @@ Classification of the probe corpus, primarily serving **M3** (graded-sharing hyp
 - Each prompt exists as a zh/en pair sharing the same `id` across `probe_prompts_zh.jsonl` and `probe_prompts_en.jsonl`.
 - Pairs are **strictly syntax-aligned**: same clause structure, same information order, same final-position cloze — only the language changes. This keeps "language difference" from being confounded with "phrasing difference."
 - Every prompt ends right before the concept would be verbalized, so the J-lens readout at the final token position should surface the concept before the model says it.
-- `expected` lists acceptable surface tokens per language, used by `tvinnhugr.metrics.topk_overlap` scoring. Cross-lingual overlap is computed at the *concept* level (via the shared `concept` label / expected-token translation table), never by raw string match.
+- `expected` lists acceptable surface tokens per language, used by `j7scope.metrics.topk_overlap` scoring. Cross-lingual overlap is computed at the *concept* level (via the shared `concept` label / expected-token translation table), never by raw string match.
 
 ## Categories
 

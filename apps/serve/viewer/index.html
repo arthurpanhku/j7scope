@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>J7Scope · Live J-Space</title>
+<style>
+  :root {
+    --bg: #0e0f13;
+    --panel: #161821;
+    --panel-2: #1c1f2b;
+    --line: #2a2e3d;
+    --ink: #e7e9f0;
+    --muted: #8b90a3;
+    --zh: #f2a65a;   /* warm — the twined thread */
+    --en: #6aa9ff;   /* cool */
+    --accent: #b98cff;
+    --good: #57c98a;
+    font-synthesis: none;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(1200px 600px at 50% -10%, #191c27 0%, var(--bg) 60%);
+    color: var(--ink);
+    font: 14px/1.5 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    padding: 20px 22px 40px;
+  }
+  header { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  h1 { font-size: 18px; margin: 0; letter-spacing: .2px; }
+  h1 .sub { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
+  .badges { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .badge {
+    font-size: 11px; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted); background: var(--panel);
+    white-space: nowrap;
+  }
+  .badge.on { color: var(--good); border-color: #29513c; }
+  .badge.demo { color: #ffcf6b; border-color: #5a4a1e; background: #241d0f; }
+  .badge b { color: var(--ink); font-weight: 600; }
+
+  .stream {
+    margin: 14px 0; padding: 10px 12px; min-height: 42px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 13px;
+    color: var(--muted); white-space: pre-wrap; word-break: break-word;
+  }
+  .stream .tok { color: var(--ink); }
+  .stream .cur { background: var(--accent); color: #14121b; border-radius: 3px; padding: 0 2px; }
+
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+  .col {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px 18px; overflow: hidden;
+  }
+  .col h2 { margin: 0 0 2px; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; }
+  .zh .dot { background: var(--zh); } .en .dot { background: var(--en); }
+  .col .caption { color: var(--muted); font-size: 11px; margin-bottom: 12px; }
+
+  .rows { display: flex; flex-direction: column; gap: 7px; }
+  .row { display: grid; grid-template-columns: minmax(72px, auto) 1fr 46px; gap: 10px; align-items: center; }
+  .row .word { font-size: 14px; }
+  .zh .row .word { color: var(--zh); } .en .row .word { color: var(--en); }
+  .bar { height: 8px; border-radius: 999px; background: var(--panel-2); overflow: hidden; }
+  .bar > span { display: block; height: 100%; border-radius: 999px; transition: width .18s ease; }
+  .zh .bar > span { background: linear-gradient(90deg, #8a5a2a, var(--zh)); }
+  .en .bar > span { background: linear-gradient(90deg, #2f5aa0, var(--en)); }
+  .row .score { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .empty { color: var(--muted); font-size: 12px; padding: 10px 0; }
+
+  footer { margin-top: 20px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+  footer code { color: var(--ink); background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+  <header>
+    <h1>J7Scope <span class="sub">Live J-Space · 双生工作空间实时读出</span></h1>
+    <div class="badges">
+      <span class="badge" id="b-model">model —</span>
+      <span class="badge" id="b-layer">layer —</span>
+      <span class="badge" id="b-conn">connecting…</span>
+    </div>
+  </header>
+
+  <div class="stream" id="stream"><span class="cur">▍</span></div>
+
+  <div class="cols">
+    <section class="col zh">
+      <h2><span class="dot"></span> 中文 · Chinese read-out</h2>
+      <div class="caption">模型此刻"倾向于说"的中文概念（J-lens top-k，按分数）</div>
+      <div class="rows" id="rows-zh"><div class="empty">等待 token…</div></div>
+    </section>
+    <section class="col en">
+      <h2><span class="dot"></span> English read-out</h2>
+      <div class="caption">The English concepts the model is inclined to say right now</div>
+      <div class="rows" id="rows-en"><div class="empty">waiting for tokens…</div></div>
+    </section>
+  </div>
+
+  <footer id="foot">
+    Side-channel of <code>j7scope-serve</code>. One column per script from the same
+    J-lens read-out — if both light up on the same concept, that direction is shared
+    across zh/en. <span id="foot-demo"></span>
+  </footer>
+
+<script>
+(function () {
+  var streamEl = document.getElementById("stream");
+  var rowsZh = document.getElementById("rows-zh");
+  var rowsEn = document.getElementById("rows-en");
+  var bModel = document.getElementById("b-model");
+  var bLayer = document.getElementById("b-layer");
+  var bConn = document.getElementById("b-conn");
+  var footDemo = document.getElementById("foot-demo");
+
+  var tokens = [];            // recent surface tokens
+  var MAX_TOKENS = 60;
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function renderStream() {
+    var body = tokens.map(function (t) {
+      return '<span class="tok">' + escapeHtml(t) + "</span>";
+    }).join("");
+    streamEl.innerHTML = body + '<span class="cur">▍</span>';
+    streamEl.scrollTop = streamEl.scrollHeight;
+  }
+
+  function maxScore(list) {
+    var m = -Infinity;
+    for (var i = 0; i < list.length; i++) if (list[i].score > m) m = list[i].score;
+    return m;
+  }
+
+  function renderColumn(el, list) {
+    if (!list || !list.length) {
+      el.innerHTML = '<div class="empty">—</div>';
+      return;
+    }
+    var hi = maxScore(list);
+    var lo = hi - 6;  // ~6 logits of dynamic range for the bar
+    var html = list.map(function (item) {
+      var frac = Math.max(0.04, Math.min(1, (item.score - lo) / (hi - lo || 1)));
+      return (
+        '<div class="row">' +
+          '<div class="word">' + escapeHtml(item.token) + "</div>" +
+          '<div class="bar"><span style="width:' + (frac * 100).toFixed(1) + '%"></span></div>' +
+          '<div class="score">' + item.score.toFixed(1) + "</div>" +
+        "</div>"
+      );
+    }).join("");
+    el.innerHTML = html;
+  }
+
+  function onMeta(ev) {
+    bModel.textContent = "model " + ev.model;
+    bModel.innerHTML = "model <b>" + escapeHtml(ev.model) + "</b>";
+    bLayer.innerHTML = "layer <b>" + ev.layer + "</b>";
+    if (ev.is_demo) {
+      var d = document.createElement("span");
+      bModel.parentNode.insertBefore(Object.assign(document.createElement("span"),
+        { className: "badge demo", textContent: "DEMO — synthetic read-out" }), bConn);
+      footDemo.textContent = "Running in demo mode: the read-out is synthesised, not from a real model.";
+    }
+  }
+
+  function onToken(ev) {
+    tokens.push(ev.token + " ");
+    if (tokens.length > MAX_TOKENS) tokens.shift();
+    renderStream();
+    renderColumn(rowsZh, ev.readout.zh);
+    renderColumn(rowsEn, ev.readout.en);
+  }
+
+  function connect() {
+    var es = new EventSource("/jspace/stream");
+    es.onopen = function () {
+      bConn.textContent = "● live";
+      bConn.className = "badge on";
+    };
+    es.onerror = function () {
+      bConn.textContent = "reconnecting…";
+      bConn.className = "badge";
+    };
+    es.onmessage = function (e) {
+      var ev;
+      try { ev = JSON.parse(e.data); } catch (_) { return; }
+      if (ev.type === "meta") onMeta(ev);
+      else if (ev.type === "token") onToken(ev);
+      else if (ev.type === "request_start") { tokens = []; renderStream(); }
+    };
+  }
+
+  renderStream();
+  connect();
+})();
+</script>
+</body>
+</html>

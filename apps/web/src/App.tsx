@@ -133,7 +133,7 @@ const defaultSettings: LlmSettings = {
   rememberKey: false,
 };
 
-const settingsStorageKey = "tvinnhugr.llmSettings";
+const settingsStorageKey = "j7scope.llmSettings";
 
 function formatPercent(value: number | undefined): string {
   if (value === undefined || Number.isNaN(value)) return "n/a";
@@ -231,7 +231,7 @@ function buildAgentSystemPrompt({
     : null;
 
   return [
-    "You are the TvinnHugr research agent.",
+    "You are the J7Scope research agent.",
     "Answer in concise Chinese unless the user asks otherwise.",
     "Ground your answer in the current J-Space experiment artifacts.",
     "Be explicit when a result is demo/synthetic rather than a real experiment.",
@@ -465,7 +465,7 @@ function App() {
       <main className="app-shell">
         <div className="empty-state">
           <Activity size={24} />
-          <strong>Loading TvinnHugr artifacts</strong>
+          <strong>Loading J7Scope artifacts</strong>
         </div>
       </main>
     );
@@ -475,9 +475,9 @@ function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <img src="/logo.svg" alt="TvinnHugr" />
+          <img src="/logo.svg" alt="J7Scope" />
           <div>
-            <h1>TvinnHugr Explorer</h1>
+            <h1>J7Scope Explorer</h1>
             <span>{data.manifest.model}</span>
           </div>
         </div>
