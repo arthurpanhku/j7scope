@@ -212,7 +212,7 @@ cd apps/web && npm install && npm run dev -- --port 5173
 **平台线（P1–P5）**
 
 - [x] P1 Trace schema v1 + `--record` + Replay 回放模式（mock 可验证，零 GPU）
-- [ ] P2 静态 Gallery 站上 GitHub Pages（深链 + 双语并排 + 导出）
+- [x] P2 静态 Gallery 站（Gallery/Replay/Compare + 深链 + 导出 SVG/PNG/JSON/BibTeX + Pages 部署工作流）
 - [ ] P3 首批真实 trace + Zenodo DOI（与 M1 首批数据合并一次租卡）
 - [ ] P4 Colab 采集笔记本 + 社区提交流程
 - [ ] P5 严谨层完全体（并排对齐 + null 带 + 可展开审计）

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>J7Scope · Live</title>
+<link rel="stylesheet" href="assets/jspace.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="./">J7Scope</a> <span class="sub">Live · 实时读出</span></h1>
+    <nav>
+      <a href="./">← Gallery</a>
+      <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="badges" style="margin-bottom:6px">
+    <span class="badge" id="b-model">model —</span>
+    <span class="badge" id="b-layer">layer —</span>
+    <span class="badge" id="b-conn">connecting…</span>
+  </div>
+
+  <p class="lede">
+    Streaming from the sidecar as it generates. Point an agent harness (opencode, codex)
+    at this sidecar and watch the model's J-space light up token by token. For rigor
+    (null bands, sharedness) and permanent artifacts, record a trace and use
+    <a href="./">the gallery</a>.
+  </p>
+
+  <div class="stream" id="stream"><span class="caret">▍</span></div>
+
+  <div class="cols">
+    <section class="col zh">
+      <h2><span class="dot"></span> 中文 · Chinese read-out</h2>
+      <div class="caption">模型此刻"倾向于说"的中文概念（J-lens top-k）</div>
+      <div class="rows" id="rows-zh"><div class="empty">等待 token…</div></div>
+    </section>
+    <section class="col en">
+      <h2><span class="dot"></span> English read-out</h2>
+      <div class="caption">The English concepts the model is inclined to say right now</div>
+      <div class="rows" id="rows-en"><div class="empty">waiting…</div></div>
+    </section>
+  </div>
+
+  <footer id="foot">Live view has no rigor layer (that needs the whole session); record a trace to get it. <span id="foot-demo"></span></footer>
+
+<script src="assets/jspace.js"></script>
+<script>
+(function () {
+  var J = window.JSpace, $ = function (id) { return document.getElementById(id); };
+  var toks = [], MAX = 60;
+  var es = new EventSource("jspace/stream");
+  es.onopen = function () { $("b-conn").textContent = "● live"; $("b-conn").className = "badge on"; };
+  es.onerror = function () { $("b-conn").textContent = "reconnecting…"; $("b-conn").className = "badge"; };
+  es.onmessage = function (e) {
+    var ev; try { ev = JSON.parse(e.data); } catch (_) { return; }
+    if (ev.type === "meta") {
+      $("b-model").innerHTML = "model <b>" + J.esc(ev.model) + "</b>";
+      $("b-layer").innerHTML = "layer <b>" + ev.layer + "</b>";
+      if (ev.is_demo) $("foot-demo").textContent = "Live demo backend: synthetic read-out.";
+    } else if (ev.type === "request_start") { toks = []; J.renderStream($("stream"), toks, -1); }
+    else if (ev.type === "token") {
+      toks.push(ev.token); if (toks.length > MAX) toks.shift();
+      J.renderStream($("stream"), toks, toks.length - 1);
+      J.renderColumn($("rows-zh"), ev.readout.zh);
+      J.renderColumn($("rows-en"), ev.readout.en);
+    }
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>J7Scope · Replay</title>
+<link rel="stylesheet" href="assets/jspace.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="./">J7Scope</a> <span class="sub">Replay</span></h1>
+    <nav>
+      <a href="./">← Gallery</a>
+      <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
+    </nav>
+  </header>
+
+  <div class="badges" style="margin-bottom:6px">
+    <span class="badge" id="b-model">model —</span>
+    <span class="badge" id="b-layer">layer —</span>
+    <span class="badge" id="b-lang">—</span>
+  </div>
+
+  <div class="controls">
+    <button id="playBtn">▶ 播放</button>
+    <button id="prevBtn">◀</button>
+    <button id="nextBtn">▶</button>
+    <input type="range" id="scrub" min="0" max="0" value="0" />
+    <span class="pos" id="pos">0 / 0</span>
+    <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="0.5">0.5×</option><option value="4">4×</option></select>
+    <span class="spacer"></span>
+    <div class="export">
+      <button id="exSvg">⬇ SVG</button>
+      <button id="exPng">⬇ PNG</button>
+      <button id="exJson">⬇ JSON</button>
+      <button id="exBib">⬇ BibTeX</button>
+      <button id="exLink">🔗 Copy link</button>
+    </div>
+  </div>
+
+  <div class="stream" id="stream"><span class="caret">▍</span></div>
+  <div class="rigor" id="rigor" style="display:none"></div>
+
+  <div class="cols">
+    <section class="col zh">
+      <h2><span class="dot"></span> 中文 · Chinese read-out</h2>
+      <div class="caption">模型此刻"倾向于说"的中文概念（J-lens top-k）</div>
+      <div class="rows" id="rows-zh"></div>
+    </section>
+    <section class="col en">
+      <h2><span class="dot"></span> English read-out</h2>
+      <div class="caption">The English concepts the model is inclined to say right now</div>
+      <div class="rows" id="rows-en"></div>
+    </section>
+  </div>
+
+  <footer id="foot">
+    Deep-link this exact moment with <b>🔗 Copy link</b>. The rigor strip tests zh/en
+    agreement against a shuffled-pairing null (baked in at capture; see
+    <code>j7scope/rigor.py</code>). <span id="foot-demo"></span>
+  </footer>
+
+<script src="assets/jspace.js"></script>
+<script>
+(function () {
+  var J = window.JSpace, $ = function (id) { return document.getElementById(id); };
+  var params = new URLSearchParams(location.search), traceId = params.get("trace");
+  if (!traceId) { location.href = "./"; return; }
+
+  var TRACE = null, idx = 0, playing = false, timer = null;
+
+  function show(i) {
+    idx = J.clamp(i, 0, TRACE.tokens.length - 1);
+    var tok = TRACE.tokens[idx];
+    J.renderStream($("stream"), TRACE.tokens.map(function (t) { return t.token; }), idx, function (j) { stop(); show(j); });
+    J.renderColumn($("rows-zh"), tok.readout.zh);
+    J.renderColumn($("rows-en"), tok.readout.en);
+    J.renderRigor($("rigor"), tok);
+    $("scrub").value = idx; $("pos").textContent = (idx + 1) + " / " + TRACE.tokens.length;
+    history.replaceState(null, "", "?trace=" + encodeURIComponent(traceId) + "#token=" + idx);
+  }
+  function stop() { playing = false; $("playBtn").textContent = "▶ 播放"; if (timer) { clearTimeout(timer); timer = null; } }
+  function tick() {
+    if (!playing) return;
+    if (idx >= TRACE.tokens.length - 1) { stop(); return; }
+    show(idx + 1); timer = setTimeout(tick, 260 / parseFloat($("speed").value || "1"));
+  }
+  function play() { if (idx >= TRACE.tokens.length - 1) idx = -1; playing = true; $("playBtn").textContent = "⏸ 暂停"; tick(); }
+
+  $("playBtn").onclick = function () { playing ? stop() : play(); };
+  $("prevBtn").onclick = function () { stop(); show(idx - 1); };
+  $("nextBtn").onclick = function () { stop(); show(idx + 1); };
+  $("scrub").oninput = function () { stop(); show(parseInt(this.value, 10)); };
+  $("exSvg").onclick = function () { J.exportSVG(TRACE, idx); };
+  $("exPng").onclick = function () { J.exportPNG(TRACE, idx); };
+  $("exJson").onclick = function () { J.exportTokenJSON(TRACE, idx); };
+  $("exBib").onclick = function () { J.exportBibTeX(TRACE, location.href); };
+  $("exLink").onclick = function () {
+    navigator.clipboard && navigator.clipboard.writeText(location.href);
+    var b = $("exLink"), t = b.textContent; b.textContent = "✓ copied"; setTimeout(function () { b.textContent = t; }, 1200);
+  };
+
+  J.fetchTrace(traceId).then(function (t) {
+    TRACE = t; traceId = t.manifest.trace_id;
+    $("b-model").innerHTML = "model <b>" + J.esc(t.manifest.model) + "</b>";
+    $("b-layer").innerHTML = "layer <b>" + t.manifest.layer + "</b>";
+    $("b-lang").textContent = "lang " + t.manifest.language;
+    if (t.manifest.is_demo) { $("b-lang").className = "badge demo"; $("b-lang").textContent += " · DEMO";
+      $("foot-demo").textContent = "Demo trace: synthetic, honestly run through the real rigor pipeline."; }
+    $("scrub").max = t.tokens.length - 1;
+    var start = 0, h = location.hash.match(/token=(\d+)/);
+    if (h) start = J.clamp(parseInt(h[1], 10), 0, t.tokens.length - 1);
+    show(start);
+  }).catch(function (err) {
+    $("stream").innerHTML = '<span style="color:var(--warn)">无法加载 trace「' + J.esc(traceId) + '」：' + J.esc(err) + '</span>';
+  });
+})();
+</script>
+</body>
+</html>

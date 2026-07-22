@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>J7Scope · J-Space Gallery</title>
+<link rel="stylesheet" href="assets/jspace.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="./">J7Scope</a> <span class="sub">J-Space Gallery · 双生工作空间</span></h1>
+    <nav>
+      <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
+      <a id="liveLink" href="live.html" style="display:none">▶ Live</a>
+    </nav>
+  </header>
+
+  <p class="lede">
+    Recorded J-lens read-outs of open models, replayable token by token. Each trace
+    shows, at every generated token, the concepts the model is inclined to say next —
+    split into 中文 and English — with a rigor layer that tests whether the two
+    languages agree beyond a shuffled-pairing null. Traces are permanent, deep-linkable
+    artifacts. <a href="https://github.com/arthurpanhku/j7scope/blob/main/docs/platform-plan.md">How it works →</a>
+  </p>
+
+  <div id="gallery"><p class="empty">Loading traces…</p></div>
+
+  <footer>
+    Demo traces are synthetic (clearly marked <span class="badge demo">DEMO</span>) but
+    honestly run through the real rigor pipeline. Real, DOI-bearing traces land with P3.
+  </footer>
+
+<script src="assets/jspace.js"></script>
+<script>
+(function () {
+  var J = window.JSpace, el = document.getElementById("gallery");
+
+  // Show a Live link only when a sidecar is actually up (health probe).
+  fetch("health").then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (h) { if (h && h.ok) document.getElementById("liveLink").style.display = ""; })
+    .catch(function () {});
+
+  J.fetchIndex().then(function (idx) {
+    if (!idx || !idx.traces || !idx.traces.length) {
+      el.innerHTML = '<p class="empty">No traces yet. Generate demo traces with '
+        + '<code>python experiments/build_demo_trace.py</code>.</p>';
+      return;
+    }
+    // Group parallel members so the pair links to the compare view.
+    var groups = {}, singles = [];
+    idx.traces.forEach(function (t) {
+      if (t.parallel_group) { (groups[t.parallel_group] = groups[t.parallel_group] || []).push(t); }
+      else { singles.push(t); }
+    });
+    var cards = [];
+    singles.forEach(function (t) { cards.push(singleCard(t)); });
+    Object.keys(groups).forEach(function (g) { cards.push(groupCard(g, groups[g])); });
+    el.className = "cards";
+    el.innerHTML = cards.join("");
+  }).catch(function (e) {
+    el.innerHTML = '<p class="empty">Failed to load index: ' + J.esc(e) + '</p>';
+  });
+
+  function tag(txt, cls) { return '<span class="badge ' + (cls || "") + '">' + J.esc(txt) + '</span>'; }
+
+  function singleCard(t) {
+    return '<a class="card" href="replay.html?trace=' + encodeURIComponent(t.trace_id) + '">' +
+      '<h3>' + J.esc(t.label || t.trace_id) + '</h3>' +
+      '<div class="meta"><span>' + t.n_tokens + ' tokens</span><span>lang ' + J.esc(t.language) + '</span></div>' +
+      '<div class="tags">' + tag(t.language) + (t.is_demo ? tag("DEMO", "demo") : "") + '</div></a>';
+  }
+  function groupCard(g, members) {
+    var langs = members.map(function (m) { return m.language; }).join(" ↔ ");
+    return '<a class="card" href="compare.html?group=' + encodeURIComponent(g) + '">' +
+      '<h3>' + J.esc(g) + ' <span class="sub">side-by-side</span></h3>' +
+      '<div class="meta"><span>' + members.length + ' aligned traces</span><span>' + J.esc(langs) + '</span></div>' +
+      '<div class="tags">' + tag("compare zh ↔ en") + (members[0].is_demo ? tag("DEMO", "demo") : "") + '</div></a>';
+  }
+})();
+</script>
+</body>
+</html>

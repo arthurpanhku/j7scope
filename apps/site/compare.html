@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>J7Scope · Compare</title>
+<link rel="stylesheet" href="assets/jspace.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="./">J7Scope</a> <span class="sub">Compare · 双生对齐</span></h1>
+    <nav>
+      <a href="./">← Gallery</a>
+      <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
+    </nav>
+  </header>
+
+  <p class="lede" id="lede">
+    Two position-aligned sessions — the same narrative run in each language — replayed
+    in lockstep. At each aligned position, do both sessions' J-space read-outs land on
+    the same concept? The evidence picture for the twin-workspace question.
+  </p>
+
+  <div class="controls">
+    <button id="playBtn">▶ 播放</button>
+    <button id="prevBtn">◀</button>
+    <button id="nextBtn">▶</button>
+    <input type="range" id="scrub" min="0" max="0" value="0" />
+    <span class="pos" id="pos">0 / 0</span>
+    <select id="speed"><option value="1">1×</option><option value="2">2×</option><option value="0.5">0.5×</option></select>
+    <span class="spacer"></span>
+    <button id="exLink">🔗 Copy link</button>
+  </div>
+
+  <div id="panels"></div>
+
+  <footer>
+    Each panel's rigor strip is that session's own zh/en agreement. Cross-session
+    concept agreement at aligned positions is the visual signal here; a formal
+    cross-trace metric lands with P5. Demo traces are synthetic but honestly scored.
+  </footer>
+
+<script src="assets/jspace.js"></script>
+<script>
+(function () {
+  var J = window.JSpace, $ = function (id) { return document.getElementById(id); };
+  var params = new URLSearchParams(location.search), group = params.get("group");
+  if (!group) { location.href = "./"; return; }
+
+  var A = null, B = null, MAP = null, pos = 0, playing = false, timer = null;
+
+  function panelHTML(side, label) {
+    return '<section class="col" style="margin-bottom:16px">' +
+      '<h2><span class="dot" style="background:var(--accent)"></span> ' + J.esc(label) + '</h2>' +
+      '<div class="stream" id="stream-' + side + '" style="margin-top:8px"><span class="caret">▍</span></div>' +
+      '<div class="rigor" id="rigor-' + side + '" style="display:none"></div>' +
+      '<div class="cols" style="margin-top:12px">' +
+      '<div class="col zh"><h2><span class="dot"></span> 中文</h2><div class="rows" id="zh-' + side + '"></div></div>' +
+      '<div class="col en"><h2><span class="dot"></span> English</h2><div class="rows" id="en-' + side + '"></div></div>' +
+      '</div></section>';
+  }
+
+  function renderSide(trace, side, tokIdx) {
+    var tok = trace.tokens[tokIdx];
+    J.renderStream($("stream-" + side), trace.tokens.map(function (t) { return t.token; }), tokIdx);
+    J.renderColumn($("zh-" + side), tok.readout.zh);
+    J.renderColumn($("en-" + side), tok.readout.en);
+    J.renderRigor($("rigor-" + side), tok);
+  }
+
+  function show(k) {
+    pos = J.clamp(k, 0, MAP.length - 1);
+    var pair = MAP[pos];          // [idxA, idxB]
+    renderSide(A, "a", pair[0]);
+    renderSide(B, "b", pair[1]);
+    $("scrub").value = pos; $("pos").textContent = (pos + 1) + " / " + MAP.length;
+    history.replaceState(null, "", "?group=" + encodeURIComponent(group) + "#pos=" + pos);
+  }
+  function stop() { playing = false; $("playBtn").textContent = "▶ 播放"; if (timer) { clearTimeout(timer); timer = null; } }
+  function tick() { if (!playing) return; if (pos >= MAP.length - 1) { stop(); return; } show(pos + 1); timer = setTimeout(tick, 300 / parseFloat($("speed").value || "1")); }
+  function play() { if (pos >= MAP.length - 1) pos = -1; playing = true; $("playBtn").textContent = "⏸ 暂停"; tick(); }
+
+  $("playBtn").onclick = function () { playing ? stop() : play(); };
+  $("prevBtn").onclick = function () { stop(); show(pos - 1); };
+  $("nextBtn").onclick = function () { stop(); show(pos + 1); };
+  $("scrub").oninput = function () { stop(); show(parseInt(this.value, 10)); };
+  $("exLink").onclick = function () {
+    navigator.clipboard && navigator.clipboard.writeText(location.href);
+    var b = $("exLink"), t = b.textContent; b.textContent = "✓ copied"; setTimeout(function () { b.textContent = t; }, 1200);
+  };
+
+  J.fetchIndex().then(function (idx) {
+    var members = (idx && idx.traces || []).filter(function (t) { return t.parallel_group === group; });
+    if (members.length < 2) throw new Error("group needs 2 members");
+    var en = members.filter(function (m) { return m.language === "en"; })[0] || members[0];
+    var zh = members.filter(function (m) { return m.language === "zh"; })[0] || members[1];
+    return Promise.all([J.fetchTrace(en.trace_id), J.fetchTrace(zh.trace_id)]);
+  }).then(function (res) {
+    A = res[0]; B = res[1];
+    var lA = A.manifest.language.toUpperCase(), lB = B.manifest.language.toUpperCase();
+    $("panels").innerHTML = panelHTML("a", "Session A · " + lA + " (" + A.manifest.trace_id + ")")
+      + panelHTML("b", "Session B · " + lB + " (" + B.manifest.trace_id + ")");
+    MAP = (A.align && A.align.position_map) ||
+      A.tokens.map(function (_, i) { return [i, Math.min(i, B.tokens.length - 1)]; });
+    $("scrub").max = MAP.length - 1;
+    var start = 0, h = location.hash.match(/pos=(\d+)/);
+    if (h) start = J.clamp(parseInt(h[1], 10), 0, MAP.length - 1);
+    show(start);
+  }).catch(function (err) {
+    $("panels").innerHTML = '<p class="empty" style="color:var(--warn)">无法加载对比组「' + J.esc(group) + '」：' + J.esc(err) + '</p>';
+  });
+})();
+</script>
+</body>
+</html>

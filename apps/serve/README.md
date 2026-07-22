@@ -32,14 +32,15 @@ plausible bilingual read-out, so you can wire everything up first:
 ```bash
 cd apps/serve
 python -m j7scope_serve --backend mock
-# open http://127.0.0.1:8799/  and, in another shell:
+# gallery at http://127.0.0.1:8799/ , live view at /live.html ; then in another shell:
 curl -N http://127.0.0.1:8799/v1/chat/completions \
   -H 'content-type: application/json' \
   -d '{"stream":true,"messages":[{"role":"user","content":"hi"}]}'
 ```
 
-The viewer lights up token by token. Everything from the mock backend is clearly
-marked `DEMO`.
+The live view (`/live.html`) lights up token by token. Everything from the mock
+backend is clearly marked `DEMO`. The sidecar serves the static platform in
+[`../site`](../site) (gallery / replay / compare / live) at `/`.
 
 ## Real read-out
 
@@ -69,11 +70,12 @@ python ../../experiments/build_demo_trace.py
 python -m j7scope_serve --backend mock --traces ../../results/traces
 ```
 
-Then open the replay viewer:
+Then browse the gallery and open a trace:
 
-- `http://127.0.0.1:8799/?trace=demo-narrative-en` — play a trace token by token
-- deep-link a moment: `…/?trace=demo-narrative-en#token=3`
-- the trace picker (top-left) lists everything in `traces/index.json`
+- `http://127.0.0.1:8799/` — gallery of all traces in `traces/index.json`
+- `…/replay.html?trace=demo-narrative-en` — play a trace token by token (export SVG/PNG/JSON/BibTeX)
+- deep-link a moment: `…/replay.html?trace=demo-narrative-en#token=3`
+- `…/compare.html?group=demo-parallel` — synced side-by-side zh/en replay
 
 At each token the **rigor strip** shows the cross-lingual concept overlap against
 a shuffled-pairing **null band** — a bar past the null band is a real signal, not
@@ -98,7 +100,8 @@ trace at capture time; the viewer only displays it. Trace Schema v1 lives in
 | `/v1/chat/completions` | POST | OpenAI chat, streaming or not; drives generation |
 | `/v1/models` | GET | one model entry (harnesses probe this) |
 | `/jspace/stream` | GET | SSE: one J-space event per generated token |
-| `/` | GET | the standalone viewer |
+| `/`, `/replay.html`, `/compare.html`, `/live.html`, `/assets/*` | GET | the static platform ([`../site`](../site)) |
+| `/traces/*` | GET | recorded Trace v1 files (when `--traces`/`--record` set) |
 | `/health` | GET | backend / model / layer / viewer count |
 
 ### Side-channel event
@@ -128,13 +131,17 @@ same concept at once, that workspace direction is shared across languages.
 ```
 apps/serve/
 ├── j7scope_serve/
-│   ├── __main__.py     # CLI
-│   ├── app.py          # stdlib HTTP server: OpenAI proxy + SSE side-channel
+│   ├── __main__.py     # CLI (--record / --traces)
+│   ├── app.py          # stdlib HTTP server: OpenAI proxy + SSE + static site + traces
 │   ├── backends.py     # MockBackend (stdlib) + HFBackend (torch, reuses JLens)
 │   ├── bus.py          # thread-safe fan-out to viewers
+│   ├── recorder.py     # buffer a session -> rigor pass -> Trace v1
 │   └── protocol.py     # event schema + zh/en script bucketing
-├── viewer/index.html   # self-contained live viewer
 └── integrations/opencode/
+
+apps/site/              # the static platform served at / (also GitHub Pages)
+├── index.html          # gallery       replay.html   compare.html   live.html
+└── assets/jspace.{css,js}   # shared rendering + export (SVG/PNG/JSON/BibTeX)
 ```
 
 > The mock backend is a wiring/demo aid, not an experiment. It never loads a

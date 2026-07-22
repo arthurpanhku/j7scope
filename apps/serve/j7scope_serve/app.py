@@ -27,7 +27,7 @@ from . import protocol
 from .backends import Backend
 from .bus import ReadoutBus
 
-VIEWER_HTML = Path(__file__).resolve().parents[1] / "viewer" / "index.html"
+SITE_DIR = Path(__file__).resolve().parents[2] / "site"   # apps/site (gallery/replay/…)
 
 
 class SidecarServer(ThreadingHTTPServer):
@@ -120,8 +120,6 @@ class _Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):  # noqa: N802
         path = self.path.split("?", 1)[0]
-        if path in ("/", "/index.html"):
-            return self._serve_viewer()
         if path == "/health":
             return self._json({
                 "ok": True,
@@ -144,7 +142,9 @@ class _Handler(BaseHTTPRequestHandler):
             return self._stream_jspace()
         if path == "/traces/index.json" or path.startswith("/traces/"):
             return self._serve_trace_file(path[len("/traces/"):])
-        return self._json({"error": "not found"}, status=404)
+        # everything else: static file from the site dir (gallery / replay / …)
+        rel = "index.html" if path == "/" else path.lstrip("/")
+        return self._serve_static(SITE_DIR, rel)
 
     def do_POST(self):  # noqa: N802
         path = self.path.split("?", 1)[0]
@@ -155,13 +155,17 @@ class _Handler(BaseHTTPRequestHandler):
     # ---- handlers ---------------------------------------------------------
 
     _CONTENT_TYPES = {".json": "application/json; charset=utf-8",
-                      ".jsonl": "application/x-ndjson; charset=utf-8"}
+                      ".jsonl": "application/x-ndjson; charset=utf-8",
+                      ".html": "text/html; charset=utf-8",
+                      ".css": "text/css; charset=utf-8",
+                      ".js": "application/javascript; charset=utf-8",
+                      ".svg": "image/svg+xml"}
 
-    def _serve_trace_file(self, rel: str) -> None:
-        traces_dir = self.server.traces_dir  # type: ignore[attr-defined]
-        if not traces_dir:
-            return self._json({"error": "no traces dir configured"}, status=404)
-        base = traces_dir.resolve()
+    def _serve_from(self, base_dir, rel: str) -> None:
+        """Serve rel from base_dir with a path-traversal guard."""
+        if not base_dir:
+            return self._json({"error": "no dir configured"}, status=404)
+        base = base_dir.resolve()
         target = (base / rel).resolve()
         if base != target and base not in target.parents:  # path-traversal guard
             return self._json({"error": "forbidden"}, status=403)
@@ -176,17 +180,11 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def _serve_viewer(self) -> None:
-        try:
-            body = VIEWER_HTML.read_bytes()
-        except OSError:
-            return self._json({"error": "viewer not found"}, status=500)
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
-        self._cors()
-        self.end_headers()
-        self.wfile.write(body)
+    def _serve_trace_file(self, rel: str) -> None:
+        return self._serve_from(self.server.traces_dir, rel)  # type: ignore[attr-defined]
+
+    def _serve_static(self, base_dir, rel: str) -> None:
+        return self._serve_from(base_dir, rel)
 
     def _stream_jspace(self) -> None:
         self._begin_sse()
@@ -319,7 +317,8 @@ def serve(backend: Backend, *, host: str = "127.0.0.1", port: int = 8799,
     print(f"j7scope-serve{demo}  backend={type(backend).__name__} "
           f"model={backend.model_name} layer={backend.layer}")
     print(f"  OpenAI endpoint : http://{host}:{port}/v1")
-    print(f"  J-Space viewer  : http://{host}:{port}/")
+    print(f"  Gallery         : http://{host}:{port}/")
+    print(f"  Live view       : http://{host}:{port}/live.html")
     print(f"  J-Space stream  : http://{host}:{port}/jspace/stream")
     if record_dir:
         print(f"  recording traces: {record_dir}")

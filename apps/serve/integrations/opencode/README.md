@@ -29,7 +29,8 @@ python -m j7scope_serve --backend hf \
   --jacobian-cache ~/.cache/j7scope
 ```
 
-Open the viewer at <http://127.0.0.1:8799/>.
+Open the live view at <http://127.0.0.1:8799/live.html> (gallery of recorded
+traces at `/`).
 
 ## 2. Point opencode at it
 
@@ -47,7 +48,8 @@ or headless:
 opencode run -m j7scope/j7scope-mock "say something about deception"
 ```
 
-As opencode generates, the viewer at `/` lights up token by token.
+As opencode generates, the live view at `/live.html` lights up token by token.
+Add `--record ../../results/traces` to keep each session as a replayable trace.
 
 ## 3. (optional) Load the plugin
 

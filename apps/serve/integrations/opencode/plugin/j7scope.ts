@@ -40,7 +40,7 @@ export const J7Scope: Plugin = async ({ $, client }) => {
 
     const tag = health?.is_demo ? " (DEMO — synthetic read-out)" : "";
     console.log(
-      `[j7scope] live J-Space viewer${tag}: ${SIDECAR}/  ` +
+      `[j7scope] live J-Space view${tag}: ${SIDECAR}/live.html  ` +
         `· model=${health?.model} layer=${health?.layer}`
     );
 
@@ -63,7 +63,7 @@ export const J7Scope: Plugin = async ({ $, client }) => {
           ? "start"
           : "xdg-open";
       try {
-        await $`${opener} ${SIDECAR}/`;
+        await $`${opener} ${SIDECAR}/live.html`;
       } catch {
         /* headless / no browser: viewer URL is logged above */
       }
