@@ -34,12 +34,24 @@ class SidecarServer(ThreadingHTTPServer):
     daemon_threads = True
 
     def __init__(self, addr, backend: Backend, *, per_lang: int = 8,
-                 token_delay: float = 0.04):
+                 token_delay: float = 0.04, record_dir=None, repo_root=None,
+                 traces_dir=None):
         super().__init__(addr, _Handler)
         self.backend = backend
         self.bus = ReadoutBus()
         self.per_lang = per_lang
         self.token_delay = token_delay
+        self.record_dir = Path(record_dir) if record_dir else None
+        # Replay viewer reads traces from here; defaults to the record dir.
+        self.traces_dir = Path(traces_dir) if traces_dir else self.record_dir
+        self.repo_root = Path(repo_root) if repo_root else None
+        self._lexicon = None  # built lazily on first recorded session
+
+    def lexicon(self):
+        if self._lexicon is None:
+            from .recorder import build_lexicon
+            self._lexicon = build_lexicon(self.repo_root, self.backend)
+        return self._lexicon
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -130,6 +142,8 @@ class _Handler(BaseHTTPRequestHandler):
             })
         if path == "/jspace/stream":
             return self._stream_jspace()
+        if path == "/traces/index.json" or path.startswith("/traces/"):
+            return self._serve_trace_file(path[len("/traces/"):])
         return self._json({"error": "not found"}, status=404)
 
     def do_POST(self):  # noqa: N802
@@ -139,6 +153,28 @@ class _Handler(BaseHTTPRequestHandler):
         return self._json({"error": "not found"}, status=404)
 
     # ---- handlers ---------------------------------------------------------
+
+    _CONTENT_TYPES = {".json": "application/json; charset=utf-8",
+                      ".jsonl": "application/x-ndjson; charset=utf-8"}
+
+    def _serve_trace_file(self, rel: str) -> None:
+        traces_dir = self.server.traces_dir  # type: ignore[attr-defined]
+        if not traces_dir:
+            return self._json({"error": "no traces dir configured"}, status=404)
+        base = traces_dir.resolve()
+        target = (base / rel).resolve()
+        if base != target and base not in target.parents:  # path-traversal guard
+            return self._json({"error": "forbidden"}, status=403)
+        if not target.is_file():
+            return self._json({"error": "not found"}, status=404)
+        body = target.read_bytes()
+        ctype = self._CONTENT_TYPES.get(target.suffix, "application/octet-stream")
+        self.send_response(200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Content-Length", str(len(body)))
+        self._cors()
+        self.end_headers()
+        self.wfile.write(body)
 
     def _serve_viewer(self) -> None:
         try:
@@ -197,7 +233,9 @@ class _Handler(BaseHTTPRequestHandler):
                 request_id=request_id, model=model, created=created, role="assistant"))
 
         full_text = []
+        buffered = []          # per-token records for --record
         seq = 0
+        t_start = time.time()
         try:
             for step in self.backend.generate(messages, **params):
                 full_text.append(step.text)
@@ -206,6 +244,14 @@ class _Handler(BaseHTTPRequestHandler):
                     seq=seq, request_id=request_id, token=step.token,
                     readout=readout, model=self.backend.model_name,
                     layer=self.backend.layer))
+                if self.server.record_dir:  # type: ignore[attr-defined]
+                    buffered.append({
+                        "seq": seq,
+                        "ts_rel": round(time.time() - t_start, 3),
+                        "token": step.token,
+                        "token_script": protocol.script_of(step.token),
+                        "readout": readout,
+                    })
                 seq += 1
                 if stream:
                     self._sse_send(protocol.chat_chunk(
@@ -215,9 +261,11 @@ class _Handler(BaseHTTPRequestHandler):
                     time.sleep(token_delay)
         except (BrokenPipeError, ConnectionResetError):
             self.bus.publish(protocol.request_end_event(request_id=request_id, n_tokens=seq))
+            self._maybe_record(buffered, messages)
             return
 
         self.bus.publish(protocol.request_end_event(request_id=request_id, n_tokens=seq))
+        self._maybe_record(buffered, messages)
 
         if stream:
             self._sse_send(protocol.chat_chunk(
@@ -242,16 +290,41 @@ class _Handler(BaseHTTPRequestHandler):
             })
 
 
+    def _maybe_record(self, buffered, messages) -> None:
+        record_dir = self.server.record_dir  # type: ignore[attr-defined]
+        if not record_dir or not buffered:
+            return
+        prompt = ""
+        for m in reversed(messages):
+            if m.get("role") == "user":
+                prompt = m.get("content", "")
+                break
+        try:
+            from .recorder import record_trace
+            path = record_trace(record_dir, backend=self.backend, prompt=prompt,
+                                buffered=buffered, lexicon=self.server.lexicon())  # type: ignore[attr-defined]
+            if path:
+                print(f"  recorded trace -> {path}")
+        except Exception as exc:  # recording must never break the response
+            print(f"  [record] failed: {exc!r}")
+
+
 def serve(backend: Backend, *, host: str = "127.0.0.1", port: int = 8799,
-          per_lang: int = 8, token_delay: float = 0.04) -> None:
+          per_lang: int = 8, token_delay: float = 0.04,
+          record_dir=None, repo_root=None, traces_dir=None) -> None:
     server = SidecarServer((host, port), backend, per_lang=per_lang,
-                           token_delay=token_delay)
+                           token_delay=token_delay, record_dir=record_dir,
+                           repo_root=repo_root, traces_dir=traces_dir)
     demo = " [DEMO]" if getattr(backend, "is_demo", False) else ""
     print(f"j7scope-serve{demo}  backend={type(backend).__name__} "
           f"model={backend.model_name} layer={backend.layer}")
     print(f"  OpenAI endpoint : http://{host}:{port}/v1")
     print(f"  J-Space viewer  : http://{host}:{port}/")
     print(f"  J-Space stream  : http://{host}:{port}/jspace/stream")
+    if record_dir:
+        print(f"  recording traces: {record_dir}")
+    if server.traces_dir:
+        print(f"  serving traces  : {server.traces_dir}  (replay: /?trace=<id>)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

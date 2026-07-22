@@ -59,6 +59,19 @@ _CONCEPTS = [
 _FILLER_ZH = ["概念", "意图", "判断", "行为", "结果"]
 _FILLER_EN = ["concept", "intent", "judgment", "behavior", "result"]
 
+
+def mock_concept_lexicon():
+    """{surface_token: concept} for every zh/en word in the mock table.
+
+    Fillers are intentionally excluded so they map to no concept (see
+    j7scope.rigor.concepts_of). Used to give demo traces a real rigor layer.
+    """
+    lex = {}
+    for concept, zh, en in _CONCEPTS:
+        for tok in zh + en:
+            lex[tok] = concept
+    return lex
+
 _REPLY_TEMPLATE = (
     "This is the J7Scope J-Space sidecar running in demo mode. "
     "No real model is loaded; the concept columns you see are synthesised so you "

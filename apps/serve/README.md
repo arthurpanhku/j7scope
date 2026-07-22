@@ -54,6 +54,34 @@ python -m j7scope_serve --backend hf \
   --jacobian-cache ~/.cache/j7scope
 ```
 
+## Record & replay (platform P1)
+
+Live sessions are ephemeral; **traces** are the citable, deep-linkable artifact
+(see [docs/platform-plan.md](../../docs/platform-plan.md)). Record every session
+and serve them back for replay:
+
+```bash
+# record each session as a Trace v1, and serve traces for the replay viewer
+python -m j7scope_serve --backend mock --record ../../results/traces
+
+# or generate deterministic demo traces without a model (zero GPU):
+python ../../experiments/build_demo_trace.py
+python -m j7scope_serve --backend mock --traces ../../results/traces
+```
+
+Then open the replay viewer:
+
+- `http://127.0.0.1:8799/?trace=demo-narrative-en` — play a trace token by token
+- deep-link a moment: `…/?trace=demo-narrative-en#token=3`
+- the trace picker (top-left) lists everything in `traces/index.json`
+
+At each token the **rigor strip** shows the cross-lingual concept overlap against
+a shuffled-pairing **null band** — a bar past the null band is a real signal, not
+chance. The rigor layer (null, same-language ceiling, `sharedness` + CI) is
+computed once by [`j7scope/rigor.py`](../../j7scope/rigor.py) and baked into the
+trace at capture time; the viewer only displays it. Trace Schema v1 lives in
+[`j7scope/trace.py`](../../j7scope/trace.py).
+
 ## Harness integration
 
 - **opencode** → [`integrations/opencode/`](integrations/opencode/) (provider

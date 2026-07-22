@@ -1,0 +1,22 @@
+{
+  "capture": {
+    "created_at": "2026-07-22T07:17:37.476356+00:00",
+    "tool": "build_demo_trace.py"
+  },
+  "concept": null,
+  "doi": null,
+  "is_demo": true,
+  "jacobian": {
+    "corpus_id": "demo-synthetic",
+    "sha1": null
+  },
+  "kind": "single",
+  "label": "Demo · demo-narrative-en",
+  "language": "en",
+  "layer": 18,
+  "model": "demo-synthetic",
+  "parallel_group": null,
+  "prompt": "(synthetic demo narrative)",
+  "schema_version": 1,
+  "trace_id": "demo-narrative-en"
+}

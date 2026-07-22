@@ -39,6 +39,10 @@ def main() -> None:
     p.add_argument("--max-new-tokens", type=int, default=256, help="hf: generation cap")
     p.add_argument("--jacobian-cache", default=None,
                    help="hf: directory to cache the fitted Jacobian")
+    p.add_argument("--record", default=None, metavar="DIR",
+                   help="record each session as a Trace v1 under DIR/<trace_id>/")
+    p.add_argument("--traces", default=None, metavar="DIR",
+                   help="serve traces from DIR at /traces (default: the --record dir)")
     args = p.parse_args()
 
     kw = dict(layer=args.layer, topk=args.topk, per_lang=args.per_lang)
@@ -51,7 +55,8 @@ def main() -> None:
 
     backend = make_backend(args.backend, **kw)
     serve(backend, host=args.host, port=args.port, per_lang=args.per_lang,
-          token_delay=args.token_delay)
+          token_delay=args.token_delay, record_dir=args.record,
+          traces_dir=args.traces, repo_root=_REPO_ROOT)
 
 
 if __name__ == "__main__":

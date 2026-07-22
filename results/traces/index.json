@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "traces": [
+    {
+      "is_demo": true,
+      "label": "Demo · demo-narrative-en",
+      "language": "en",
+      "n_tokens": 25,
+      "parallel_group": null,
+      "trace_id": "demo-narrative-en"
+    },
+    {
+      "is_demo": true,
+      "label": "Demo · demo-parallel-en",
+      "language": "en",
+      "n_tokens": 25,
+      "parallel_group": "demo-parallel",
+      "trace_id": "demo-parallel-en"
+    },
+    {
+      "is_demo": true,
+      "label": "Demo · demo-parallel-zh",
+      "language": "zh",
+      "n_tokens": 25,
+      "parallel_group": "demo-parallel",
+      "trace_id": "demo-parallel-zh"
+    }
+  ]
+}

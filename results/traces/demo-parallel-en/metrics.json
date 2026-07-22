@@ -1,0 +1,8 @@
+{
+  "frac_above_null": 0.2,
+  "language": "en",
+  "mean_sharedness": 0.1791,
+  "n_tokens": 25,
+  "tokens_above_null": 5,
+  "trace_id": "demo-parallel-en"
+}
