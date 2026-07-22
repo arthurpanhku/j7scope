@@ -207,6 +207,18 @@ cd apps/web && npm install && npm run dev -- --port 5173
 
 ## 9. 路线图
 
+平台（显示层）的详细开发计划见 [`docs/platform-plan.md`](docs/platform-plan.md) —— Replay-first 策略、Trace Schema v1、里程碑 P1–P5。
+
+**平台线（P1–P5）**
+
+- [ ] P1 Trace schema v1 + `--record` + Replay 回放模式（mock 可验证，零 GPU）
+- [ ] P2 静态 Gallery 站上 GitHub Pages（深链 + 双语并排 + 导出）
+- [ ] P3 首批真实 trace + Zenodo DOI（与 M1 首批数据合并一次租卡）
+- [ ] P4 Colab 采集笔记本 + 社区提交流程
+- [ ] P5 严谨层完全体（并排对齐 + null 带 + 可展开审计）
+
+**研究线（M1–M3）**
+
 - [x] sidecar 最小链路跑通（mock 后端 + SSE 侧信道 + opencode 实测）
 - [ ] sidecar `hf` 后端在 GPU 机器上验证真实读出（Qwen2.5-7B-Instruct）
 - [ ] M1 跑通 Qwen2.5-7B-Instruct —— 先覆盖"欺骗/操纵"这一类概念
