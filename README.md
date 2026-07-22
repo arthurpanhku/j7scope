@@ -98,6 +98,24 @@ python -m j7scope_serve --backend hf \
 
 **当前状态：早期脚手架。** 研究侧 M1（相关性分析）正在 Qwen2.5-7B-Instruct 上搭建，尚未产出结论性数据；sidecar 的 mock 链路已跑通（含 opencode 实测），`hf` 后端已实现、待在 GPU 机器上验证。
 
+## 3. 前端展示 · J-Space Gallery
+
+一个零 GPU 的静态平台（[`apps/site`](apps/site)）：sidecar 在 `/` 提供，也可原样部署到 GitHub Pages。录制的 trace 可按 token 回放，深链到任意时刻，导出论文级 SVG/PNG/JSON/BibTeX。以下截图为明确标注的 `DEMO` 合成数据，但均经过真实的严谨层管线计算。
+
+**Compare · 双生对齐** —— 研究主张的"证据画面"。同一叙事的中文与英文两条会话按位置对齐回放；顶部 **Cross-trace rigor** 条显示在对齐位置上两种语言是否落在同一概念（越过打乱配对 null 带才算真信号），两侧读出中共享的概念被下划线标出。
+
+<p align="center"><img src="docs/screenshots/compare.png" width="840" alt="Compare view: cross-trace rigor strip + aligned zh/en sessions" /></p>
+
+**Gallery** —— 所有 trace 的入口（读 `traces/index.json`，平行对自动归为一张对比卡）。
+
+<p align="center"><img src="docs/screenshots/gallery.png" width="840" alt="J-Space Gallery landing page" /></p>
+
+**Replay** —— 单条 trace 逐 token 回放。每个 token 的 **rigor strip** 把跨语言概念重叠画在 null 带之上（越过才是真信号），并给出 sharedness 及其置信区间；右上角可导出。
+
+<p align="center"><img src="docs/screenshots/replay.png" width="840" alt="Replay view: per-token rigor strip with null band + zh/en read-out columns" /></p>
+
+> 严谨层的完整定义（sharedness、n≪d 的 CKA 陷阱、为何从不裸报 overlap）见站内 **[Methodology](apps/site/method.html)** 页与 [§6.4](#64-指标)。指标实现集中在 [`j7scope/rigor.py`](j7scope/rigor.py)，前端只负责显示。平台开发计划见 [`docs/platform-plan.md`](docs/platform-plan.md)。
+
 ## 4. 研究背景
 
 Anthropic 2026 年 7 月的论文 [*Verbalizable Representations Form a Global Workspace in Language Models*](https://transformer-circuits.pub/2026/workspace/index.html) 提出 **J-lens**：把中间层残差流通过输入-输出 Jacobian 的期望线性映射到最终层坐标，再用模型自己的 unembedding 解码，读出模型"倾向于说但还没说"的概念。论文发现这些可读出的方向构成一个稀疏子空间（**J-space**，约占激活方差的 6–10%），具备远超随机的广播式读写连接，功能上对应认知科学里的"全局工作空间"（global workspace）。
