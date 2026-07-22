@@ -54,6 +54,20 @@ NARRATIVE = [
     ("Paris", "entity"), (".", None),
 ]
 
+# Position-aligned Chinese narrative: same concept at the same index, different
+# surface language — so Compare shows two genuinely different-language streams
+# that (should) land on the same concepts.
+ZH_NARRATIVE = [
+    ("这", None), ("显然", None), ("是", None),
+    ("欺骗", "deception"), ("，", None), ("一种", None),
+    ("操纵", "manipulation"), ("了", None), ("信任", None), ("。", None),
+    ("她", None), ("感到", None), ("强烈的", None),
+    ("情绪", "emotion"), ("，", None), ("随后", None), ("做出", None), ("了", None),
+    ("让步", "concession"), ("。", None),
+    ("他们", None), ("相遇", None), ("于", None),
+    ("巴黎", "entity"), ("。", None),
+]
+
 
 def _readout(concept, lang_leaning: str, entity_noise: bool) -> dict:
     """Build a bucketed readout {zh:[...], en:[...]} for one token.
@@ -84,16 +98,27 @@ def _readout(concept, lang_leaning: str, entity_noise: bool) -> dict:
     return {"zh": rows(zh), "en": rows(en), "other": []}
 
 
+def _tag_readout_concepts(readout: dict, lexicon) -> dict:
+    """Annotate each read-out row with its concept so the client can highlight
+    shared concepts without needing the lexicon."""
+    for bucket in ("zh", "en", "other"):
+        for row in readout.get(bucket, []):
+            row["concept"] = lexicon.get(row["token"])
+    return readout
+
+
 def build_trace(narrative, language: str, lexicon, *, trace_id: str,
                 parallel_group=None, seed: int = 0):
     raw_tokens = []
     for i, (surface, concept) in enumerate(narrative):
+        readout = _tag_readout_concepts(
+            _readout(concept, language, entity_noise=(concept == "entity")), lexicon)
         raw_tokens.append({
             "seq": i,
             "ts_rel": round(i * 0.12, 3),
             "token": surface,
             "token_script": "zh" if language == "zh" else "en",
-            "readout": _readout(concept, language, entity_noise=(concept == "entity")),
+            "readout": readout,
             "concept": concept,
         })
     tokens = rigor.compute_trace_rigor(raw_tokens, lexicon, seed=seed)
@@ -151,13 +176,16 @@ def main() -> None:
     group = "demo-parallel"
     m_en, t_en, mt_en = build_trace(NARRATIVE, "en", lexicon,
                                     trace_id=f"{group}-en", parallel_group=group)
-    m_zh, t_zh, mt_zh = build_trace(NARRATIVE, "zh", lexicon,
+    m_zh, t_zh, mt_zh = build_trace(ZH_NARRATIVE, "zh", lexicon,
                                     trace_id=f"{group}-zh", parallel_group=group)
+    position_map = [[i, i] for i in range(len(NARRATIVE))]  # identical structure
+    # Cross-trace rigor: A = en session, B = zh session, at aligned positions.
+    pair_rigor = rigor.compute_pair_rigor(t_en, t_zh, position_map, lexicon)
     align = {
         "parallel_group": group,
         "members": {"en": m_en["trace_id"], "zh": m_zh["trace_id"]},
-        # identical narrative length -> identity position map
-        "position_map": [[i, i] for i in range(len(NARRATIVE))],
+        "position_map": position_map,
+        "pair_rigor": pair_rigor,
     }
     write_trace(args.out / m_en["trace_id"], manifest=m_en, tokens=t_en,
                 metrics=mt_en, align=align)

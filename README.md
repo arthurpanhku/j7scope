@@ -215,7 +215,7 @@ cd apps/web && npm install && npm run dev -- --port 5173
 - [x] P2 静态 Gallery 站（Gallery/Replay/Compare + 深链 + 导出 SVG/PNG/JSON/BibTeX + Pages 部署工作流）
 - [ ] P3 首批真实 trace + Zenodo DOI（与 M1 首批数据合并一次租卡）
 - [ ] P4 Colab 采集笔记本 + 社区提交流程
-- [ ] P5 严谨层完全体（并排对齐 + null 带 + 可展开审计）
+- [x] P5（切片）跨会话 cross-trace 指标 + 并排对齐高亮 + null 带 + 方法学页（可展开审计）
 
 **研究线（M1–M3）**
 

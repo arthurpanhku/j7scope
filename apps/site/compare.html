@@ -32,12 +32,17 @@
     <button id="exLink">🔗 Copy link</button>
   </div>
 
+  <h2 style="font-size:14px;margin:16px 0 4px">跨会话 · Cross-trace rigor <span class="sub" style="color:var(--muted);font-weight:400">— 对齐位置上 en 会话与 zh 会话是否落在同一概念（<a href="method.html">方法学</a>）</span></h2>
+  <div class="rigor" id="pairRigor" style="display:none"></div>
+
   <div id="panels"></div>
 
   <footer>
-    Each panel's rigor strip is that session's own zh/en agreement. Cross-session
-    concept agreement at aligned positions is the visual signal here; a formal
-    cross-trace metric lands with P5. Demo traces are synthetic but honestly scored.
+    The <b>cross-trace</b> strip is the real cross-lingual signal: at this aligned
+    position, does the English session's concept match the Chinese session's, beyond a
+    shuffled-position null? Each panel's own strip is its intra-token zh/en agreement.
+    Underlined read-out tokens carry a concept shared across both sessions. Demo traces
+    are synthetic but honestly scored — see <a href="method.html">methodology</a>.
   </footer>
 
 <script src="assets/jspace.js"></script>
@@ -47,7 +52,18 @@
   var params = new URLSearchParams(location.search), group = params.get("group");
   if (!group) { location.href = "./"; return; }
 
-  var A = null, B = null, MAP = null, pos = 0, playing = false, timer = null;
+  var A = null, B = null, MAP = null, PR = null, pos = 0, playing = false, timer = null;
+
+  function matchSet(tok, sharedSet) {
+    // read-out tokens whose concept is shared across both sessions
+    var m = {};
+    ["zh", "en", "other"].forEach(function (b) {
+      (tok.readout[b] || []).forEach(function (row) {
+        if (row.concept && sharedSet[row.concept]) m[row.token] = true;
+      });
+    });
+    return m;
+  }
 
   function panelHTML(side, label) {
     return '<section class="col" style="margin-bottom:16px">' +
@@ -60,19 +76,30 @@
       '</div></section>';
   }
 
-  function renderSide(trace, side, tokIdx) {
+  function renderSide(trace, side, tokIdx, match) {
     var tok = trace.tokens[tokIdx];
     J.renderStream($("stream-" + side), trace.tokens.map(function (t) { return t.token; }), tokIdx);
-    J.renderColumn($("zh-" + side), tok.readout.zh);
-    J.renderColumn($("en-" + side), tok.readout.en);
+    J.renderColumn($("zh-" + side), tok.readout.zh, match);
+    J.renderColumn($("en-" + side), tok.readout.en, match);
     J.renderRigor($("rigor-" + side), tok);
   }
 
   function show(k) {
     pos = J.clamp(k, 0, MAP.length - 1);
     var pair = MAP[pos];          // [idxA, idxB]
-    renderSide(A, "a", pair[0]);
-    renderSide(B, "b", pair[1]);
+    var pr = PR && PR[pos];
+    var sharedSet = {};
+    if (pr) (pr.shared_concepts || []).forEach(function (c) { sharedSet[c] = true; });
+    // cross-trace rigor strip (the real cross-lingual signal)
+    if (pr) {
+      J.renderRigor($("pairRigor"), {
+        token: "aligned position " + (pos + 1),
+        concept: (pr.shared_concepts || []).join(", ") || null,
+        rigor: pr
+      });
+    } else { $("pairRigor").style.display = "none"; }
+    renderSide(A, "a", pair[0], matchSet(A.tokens[pair[0]], sharedSet));
+    renderSide(B, "b", pair[1], matchSet(B.tokens[pair[1]], sharedSet));
     $("scrub").value = pos; $("pos").textContent = (pos + 1) + " / " + MAP.length;
     history.replaceState(null, "", "?group=" + encodeURIComponent(group) + "#pos=" + pos);
   }
@@ -102,6 +129,7 @@
       + panelHTML("b", "Session B · " + lB + " (" + B.manifest.trace_id + ")");
     MAP = (A.align && A.align.position_map) ||
       A.tokens.map(function (_, i) { return [i, Math.min(i, B.tokens.length - 1)]; });
+    PR = A.align && A.align.pair_rigor;   // cross-trace rigor, baked at build time
     $("scrub").max = MAP.length - 1;
     var start = 0, h = location.hash.match(/pos=(\d+)/);
     if (h) start = J.clamp(parseInt(h[1], 10), 0, MAP.length - 1);

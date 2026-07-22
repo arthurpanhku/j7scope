@@ -195,6 +195,52 @@ def estimate_same_lang_baseline(
     return max(0.05, float(np.mean(overlaps)))
 
 
+def _combined_concepts(tok: dict, lexicon: Dict[str, str]) -> List[str]:
+    """Concepts across *both* read-out columns of a token (language-agnostic).
+
+    The cross-trace metric asks whether two sessions reach the same concept, so
+    it pools zh and en read-out tokens into one concept set per token.
+    """
+    toks = ([t["token"] for t in tok["readout"].get("zh", [])]
+            + [t["token"] for t in tok["readout"].get("en", [])])
+    return concepts_of(toks, lexicon)
+
+
+def compute_pair_rigor(
+    tokens_a: Sequence[dict],
+    tokens_b: Sequence[dict],
+    position_map: Sequence[Sequence[int]],
+    lexicon: Dict[str, str],
+    *,
+    seed: int = 0,
+) -> List[dict]:
+    """Cross-trace rigor for two position-aligned sessions (e.g. en vs zh).
+
+    This is the cross-lingual signal the research cares about: at each aligned
+    position, does session A's read-out concept match session B's, more than a
+    shuffled-position pairing would? Reuses ``token_rigor`` with A's concepts as
+    the "zh" side, B's as the "en" side, and *other* aligned B positions as the
+    null pool. The same-language ceiling is A's within-session self-consistency.
+    """
+    cs_a = [_combined_concepts(t, lexicon) for t in tokens_a]
+    cs_b = [_combined_concepts(t, lexicon) for t in tokens_b]
+    same = estimate_same_lang_baseline(cs_a)
+
+    out: List[dict] = []
+    for k, (ia, ib) in enumerate(position_map):
+        a, b = cs_a[ia], cs_b[ib]
+        pool = [cs_b[jb] for (ja, jb) in position_map if jb != ib]
+        r = token_rigor(a, b, pool, same_lang_baseline=same, seed=seed + k)
+        r.update({
+            "position": k,
+            "ia": ia,
+            "ib": ib,
+            "shared_concepts": sorted(set(a) & set(b)),
+        })
+        out.append(r)
+    return out
+
+
 def compute_trace_rigor(
     tokens: Sequence[dict],
     lexicon: Dict[str, str],

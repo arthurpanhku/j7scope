@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>J7Scope · Methodology</title>
+<link rel="stylesheet" href="assets/jspace.css" />
+<style>
+  main { max-width: 760px; }
+  h2 { font-size: 16px; margin: 26px 0 8px; }
+  h3 { font-size: 13px; margin: 18px 0 6px; color: var(--ink); }
+  p, li { color: #c7cad6; }
+  .formula { background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 14px; font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 13px; overflow-x: auto; }
+  .warn { border-left: 3px solid var(--warn); padding-left: 12px; color: #d8c48a; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 8px 0; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .muted { color: var(--muted); }
+</style>
+</head>
+<body>
+  <header>
+    <h1><a href="./">J7Scope</a> <span class="sub">Methodology · 方法学</span></h1>
+    <nav><a href="./">← Gallery</a><a href="https://github.com/arthurpanhku/j7scope">GitHub</a></nav>
+  </header>
+
+  <main>
+    <p class="lede">
+      What the numbers on every trace mean, how they are computed, and — just as
+      important — what they do <b>not</b> claim. The single implementation is
+      <a href="https://github.com/arthurpanhku/j7scope/blob/main/j7scope/rigor.py"><code>j7scope/rigor.py</code></a>;
+      the frontend only displays what was baked into each trace at capture time.
+    </p>
+
+    <h2>1. What a read-out is</h2>
+    <p>
+      At each generated token we take the residual stream <code>h_l</code> at layer
+      <code>l</code>, map it through the model's expected input–output Jacobian
+      <code>J_l</code> into final-layer coordinates, and decode with the model's own
+      unembedding — the <b>J-lens</b> of
+      <a href="https://transformer-circuits.pub/2026/workspace/index.html">Anthropic's global-workspace paper</a>.
+      The result is a top-<i>k</i> list of tokens the model is inclined to say next.
+      Because the tokenizer is bilingual, that list naturally contains both Chinese and
+      English tokens; we bucket it by script into a 中文 column and an English column.
+    </p>
+    <p class="warn">
+      The zh/en split is a <b>display heuristic</b> (by character script), not a
+      linguistic judgment. Mixed tokens, proper nouns, code, and byte fragments fall to
+      an <code>other</code> bucket and are ignored by the rigor layer.
+    </p>
+
+    <h2>2. Concept space</h2>
+    <p>
+      Raw "欺骗" and "deception" never string-match, so agreement is measured in
+      <b>concept space</b>: each read-out token is mapped to a concept via a lexicon
+      (the probe corpus's <code>expected</code> lists, plus synonyms). Tokens with no
+      concept (fillers, punctuation) are dropped. Overlap between two concept sets uses
+      the overlap coefficient <code>|A∩B| / min(|A|,|B|)</code>.
+    </p>
+
+    <h2>3. Two rigor questions</h2>
+    <table>
+      <tr><th>Metric</th><th>Question</th><th>Where shown</th></tr>
+      <tr>
+        <td><b>Intra-token</b></td>
+        <td>Within one session, do the token's zh column and en column point at the same concept?</td>
+        <td>Replay + each Compare panel</td>
+      </tr>
+      <tr>
+        <td><b>Cross-trace</b></td>
+        <td>Across two position-aligned sessions (e.g. a Chinese and an English run), do they land on the same concept at the same position?</td>
+        <td>Compare (top strip)</td>
+      </tr>
+    </table>
+    <p>
+      Cross-trace is the stronger cross-lingual signal — it compares two genuinely
+      different-language sessions rather than one bilingual read-out.
+    </p>
+
+    <h2>4. The null baseline — and why raw overlap is meaningless without it</h2>
+    <p>
+      An observed overlap is compared against a <b>shuffled-pairing null</b>: pair this
+      position's concepts with <i>other</i> positions' concepts and recompute. The null's
+      p05–p95 band is drawn behind every bar; only a bar past the band is a real signal.
+    </p>
+    <p class="warn">
+      When samples are far fewer than dimensions (here n≈30, d≈3584), chance-level
+      similarity is high, not zero — the raw CKA between two <i>independent</i> random
+      matrices can reach ~0.7. So we <b>never</b> bare-report an overlap or CKA number;
+      it always appears against its null. This is enforced in
+      <a href="https://github.com/arthurpanhku/j7scope/blob/main/j7scope/metrics.py"><code>metrics.py</code></a>
+      and is the reason the null band exists.
+    </p>
+
+    <h2>5. Sharedness</h2>
+    <p>Normalizing the observed overlap to the range between chance and the achievable ceiling:</p>
+    <div class="formula">sharedness = (observed − null.mean) / (same_lang_baseline − null.mean)</div>
+    <ul>
+      <li><b>observed</b> — the concept overlap at this position.</li>
+      <li><b>null.mean</b> — chance level from shuffled pairings.</li>
+      <li><b>same_lang_baseline</b> — the within-language ceiling (how well one language agrees with itself).</li>
+      <li><b>CI</b> — a 95% interval from bootstrap resampling of the concept lists.</li>
+    </ul>
+    <p>0 means at chance; 1 means as shared as a language is with itself; a wide CI means the signal is uncertain (typically concrete entities with short read-outs).</p>
+
+    <h2>6. Honest limitations (provisional-for-P1/P5)</h2>
+    <ul>
+      <li><b>same_lang_baseline and CI</b> are estimated from a single trace here (tokens as pseudo-prompts). With a real multi-prompt corpus (roadmap P3) they become proper cross-prompt resampling.</li>
+      <li><b>sharedness is a definition, not a truth.</b> CKA, SVCCA, top-k overlap, and activation-patching would each rank things slightly differently; the definition above is one choice, stated so it can be argued with.</li>
+      <li><b>Demo traces are synthetic</b> (clearly marked <span class="badge demo">DEMO</span>). They are run through the real rigor pipeline, but carry no empirical claim. Real, DOI-bearing traces arrive with roadmap P3.</li>
+      <li><b>The concept lexicon is finite</b>; concepts outside it are invisible to the rigor layer.</li>
+    </ul>
+
+    <h2>7. Reproducing a number</h2>
+    <p>
+      Every trace records its provenance (model + revision, layer, <code>J_l</code> corpus
+      and seed) in <code>manifest.json</code>, and every per-token/per-position rigor block
+      in <code>tokens.jsonl</code> / <code>align.json</code>. Schema:
+      <a href="https://github.com/arthurpanhku/j7scope/blob/main/j7scope/trace.py"><code>j7scope/trace.py</code></a>;
+      full field spec:
+      <a href="https://github.com/arthurpanhku/j7scope/blob/main/docs/platform-plan.md">docs/platform-plan.md §3</a>.
+    </p>
+  </main>
+
+  <footer>J7Scope is an independent third-party research extension; not affiliated with or endorsed by Anthropic.</footer>
+</body>
+</html>
