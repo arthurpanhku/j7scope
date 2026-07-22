@@ -15,6 +15,7 @@
 </p>
 
 <p align="center">
+  <a href="https://arthurpanhku.me/j7scope/"><img src="https://img.shields.io/badge/▶_demo-live-brightgreen" alt="live demo" /></a>
   <img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="license" />
   <img src="https://img.shields.io/badge/status-early%20scaffold-orange" alt="status" />
   <img src="https://img.shields.io/badge/model-Qwen2.5--7B--Instruct-green" alt="model" />
@@ -100,7 +101,9 @@ python -m j7scope_serve --backend hf \
 
 ## 3. 前端展示 · J-Space Gallery
 
-一个零 GPU 的静态平台（[`apps/site`](apps/site)）：sidecar 在 `/` 提供，也可原样部署到 GitHub Pages。录制的 trace 可按 token 回放，深链到任意时刻，导出论文级 SVG/PNG/JSON/BibTeX。以下截图为明确标注的 `DEMO` 合成数据，但均经过真实的严谨层管线计算。
+> **▶ Try it live：<https://arthurpanhku.me/j7scope/>** —— 下面每张截图都可以在线点开、回放、深链、导出。
+
+一个零 GPU 的静态平台（[`apps/site`](apps/site)）：sidecar 在 `/` 提供，也可原样部署到 GitHub Pages（本仓库已通过 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) 自动部署到上面的地址）。录制的 trace 可按 token 回放，深链到任意时刻，导出论文级 SVG/PNG/JSON/BibTeX。以下截图为明确标注的 `DEMO` 合成数据，但均经过真实的严谨层管线计算。
 
 **Compare · 双生对齐** —— 研究主张的"证据画面"。同一叙事的中文与英文两条会话按位置对齐回放；顶部 **Cross-trace rigor** 条显示在对齐位置上两种语言是否落在同一概念（越过打乱配对 null 带才算真信号），两侧读出中共享的概念被下划线标出。
 
