@@ -1,0 +1,44 @@
+name: Validate code and traces
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install Python package and test runner
+        run: python -m pip install -e . pytest
+
+      - name: Validate committed trace gallery
+        run: python experiments/validate_trace_gallery.py
+
+      - name: Run Python tests
+        run: pytest -q
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Build web application
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npm run build

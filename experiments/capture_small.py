@@ -20,7 +20,6 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,6 +58,7 @@ def main() -> None:
     from j7scope_serve.backends import HFBackend
     from j7scope_serve.recorder import build_lexicon, record_trace
     from j7scope_serve.protocol import bucket_readout, script_of
+    from j7scope.trace import rebuild_trace_index
 
     print(f"loading {args.model} on {args.device} (first run downloads ~1GB)…")
     t0 = time.time()
@@ -88,18 +88,22 @@ def main() -> None:
             print(f"  (no tokens produced for {trace_id})")
             continue
         path = record_trace(args.out, backend=be, prompt=prompt, buffered=buffered,
-                            lexicon=lexicon, trace_id=trace_id)
+                            lexicon=lexicon, trace_id=trace_id, language=lang,
+                            concept="deception",
+                            capture_tool="experiments/capture_small.py")
         _mark_preview(path, model=args.model, layer=args.layer, language=lang)
         print(f"  wrote {path}  ({len(buffered)} tokens, {time.time() - t1:.0f}s)")
         written.append(trace_id)
 
-    _refresh_index(args.out)
+    rebuild_trace_index(args.out)
     print(f"done. real small-model traces: {written}")
     print("view: python -m j7scope_serve --backend mock --traces results/traces  ->  http://127.0.0.1:8799/")
 
 
 def _mark_preview(trace_dir: Path, *, model: str, layer: int, language: str) -> None:
     """Flag the manifest as a small-model preview (real read-outs, not research)."""
+    from j7scope.artifacts import write_json
+
     mpath = trace_dir / "manifest.json"
     m = json.loads(mpath.read_text(encoding="utf-8"))
     m["preview"] = True
@@ -107,30 +111,7 @@ def _mark_preview(trace_dir: Path, *, model: str, layer: int, language: str) -> 
     m["note"] = ("Real J-lens read-out from a small model on CPU. Pipeline preview, "
                  "not a research result; cross-lingual numbers are not meaningful at "
                  "this scale.")
-    mpath.write_text(json.dumps(m, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-                     encoding="utf-8")
-
-
-def _refresh_index(out: Path) -> None:
-    """Rebuild traces/index.json from whatever trace dirs exist."""
-    rows = []
-    for d in sorted(out.glob("*/")):
-        mf = d / "manifest.json"
-        if not mf.exists():
-            continue
-        m = json.loads(mf.read_text(encoding="utf-8"))
-        rows.append({
-            "trace_id": m["trace_id"],
-            "label": m.get("label", m["trace_id"]),
-            "language": m.get("language", "?"),
-            "is_demo": bool(m.get("is_demo", False)),
-            "preview": bool(m.get("preview", False)),
-            "n_tokens": sum(1 for _ in (d / "tokens.jsonl").open(encoding="utf-8")),
-            "parallel_group": m.get("parallel_group"),
-        })
-    (out / "index.json").write_text(
-        json.dumps({"schema_version": 1, "traces": rows}, ensure_ascii=False,
-                   indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_json(mpath, m)
 
 
 if __name__ == "__main__":

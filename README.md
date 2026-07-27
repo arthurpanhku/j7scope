@@ -219,7 +219,69 @@ h_en = jlens.collect_residual(pairs["deception-01"]["en"]["text"])
 print(jlens.readout(h_zh), jlens.readout(h_en))  # 两种语言的读出一致吗？
 ```
 
-### 8.1 J-Space Explorer 前端（离线 artifact）
+在投入 7B GPU 采集前，可先在随机初始化的 tiny-Qwen2 上复跑 Jacobian 数学一致性检查；
+它不下载模型，也不产生研究结论：
+
+```bash
+python experiments/validate_jacobian.py --n-probes 4096
+```
+
+报告中的 `exact_vs_full_graph` 比较 `torch.func.jacrev` 尾部重放与独立的全模型逐维
+VJP，`paper_batched_vs_scalar_vjp` 检查上游 replicated-batch position reduction 与
+逐标量实现，两者
+都应该接近数值零误差；`stochastic_vs_exact` 则量化当前随机探针估计的有限样本误差。
+当前 capture 路径拟合的是 cloze 的同位置 `∂h_L[p]/∂h_l[p]` 变体；
+`estimate_jacobian_paper` 才会汇总未来 target positions。正式 P3 运行前必须先锁定并记录
+所用口径。
+
+上游预训练 lens 的云 GPU 复现入口已经固定到发布时使用的 Qwen3.5-4B 配置：
+
+```bash
+pip install -e '.[upstream]'
+python experiments/reproduce_upstream.py --preflight-only
+python experiments/reproduce_upstream.py
+```
+
+正式 paper estimator 的拟合入口支持显存预检、运行计时、峰值显存记录以及逐 prompt
+原子 checkpoint。默认仓库语料仅用于 smoke test，不是研究证据；正式运行流式抽取
+WikiText 1000 条：
+
+```bash
+pip install -e '.[fit]'
+python experiments/fit_paper_jacobian.py --dry-run
+python experiments/fit_paper_jacobian.py --preflight-only
+python experiments/fit_paper_jacobian.py \
+  --dataset Salesforce/wikitext \
+  --dataset-config wikitext-103-raw-v1 \
+  --max-prompts 1000 --min-chars 200
+```
+
+中断后原命令重跑会从 `results/*.checkpoint.pt` 续传，并校验模型、层、estimator 参数和
+完整有序语料 SHA-1。最终 `*.pt` 是可直接传给 sidecar `--jacobian-file` 的 float32
+矩阵，同名 JSON 保存模型 revision、硬件、耗时、峰值显存和 tensor SHA-1。
+
+在线 GPU 选型、Runpod 操作、Colab 边界和学术 credits 申请步骤见
+[`docs/gpu-cloud-runbook.md`](docs/gpu-cloud-runbook.md)；英文申请底稿见
+[`docs/gpu-credit-proposal.md`](docs/gpu-credit-proposal.md)。
+
+### 8.1 社区 GPU / Colab 采集
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/arthurpanhku/j7scope/blob/main/notebooks/capture_colab.ipynb)
+
+Colab notebook 用 Qwen2.5-1.5B-Instruct 采一条自定义真实模型 trace，自动适配 T4 的
+`float16` 与新 GPU 的 `bfloat16`，完成 schema/provenance/rigor 校验后下载 ZIP。默认
+产物明确标为 `preview`，不作为研究证据。任何 CUDA 机器也可直接运行：
+
+```bash
+python experiments/capture_trace.py \
+  --trace-id community-deception-en \
+  --language en --concept deception \
+  --prompt "In one sentence, explain why deception can be tempting."
+```
+
+提交步骤和数据边界见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
+
+### 8.2 J-Space Explorer 前端（离线 artifact）
 
 `apps/web` 是离线浏览已跑完实验 run 的前端，读取 `results/runs/<run_id>/` 下一组稳定 artifact（`manifest.json` / `readouts.jsonl` / `patches.jsonl` / `projections.json` / `layer_scan.json` / `metrics.json`）。本地开发可先生成一个明确标记为 demo 的假数据 run：
 
@@ -239,8 +301,13 @@ cd apps/web && npm install && npm run dev -- --port 5173
 - [x] P1 Trace schema v1 + `--record` + Replay 回放模式（mock 可验证，零 GPU）
 - [x] P2 静态 Gallery 站（Gallery/Replay/Compare + 深链 + 导出 SVG/PNG/JSON/BibTeX + Pages 部署工作流）
 - [ ] P3 首批真实 trace + Zenodo DOI（与 M1 首批数据合并一次租卡）
-- [ ] P4 Colab 采集笔记本 + 社区提交流程
+- [x] P4（实现）Colab 自定义采集 + T4 dtype 适配 + 贡献规范/模板 + trace CI
+- [ ] P4（验收）首个外部贡献者产出并合入通过 CI 的 preview trace
 - [x] P5（切片）跨会话 cross-trace 指标 + 并排对齐高亮 + null 带 + 方法学页（可展开审计）
+- [x] P3 前置（切片）精确 position-local Jacobian + upstream paper reduction + tiny-Qwen2 数学校验
+- [x] P3 前置（切片）固定上游 Qwen3.5-4B/lens revision 的云 GPU 复现脚本与显存预检
+- [x] P3 前置（实现）replicated-batch 正式 fitter + 原子 checkpoint/resume + WikiText 入口
+- [ ] P3 前置（剩余）在云 GPU 执行上游已知案例并据实锁定正式拟合口径
 
 **研究线（M1–M3）**
 

@@ -36,9 +36,17 @@ def main() -> None:
     p.add_argument("--token-delay", type=float, default=0.04,
                    help="seconds between streamed tokens (mock pacing / demo feel)")
     p.add_argument("--device", default=None, help="hf: torch device override")
+    p.add_argument("--dtype", choices=["auto", "bfloat16", "float16", "float32"],
+                   default="auto", help="hf: model dtype (auto handles T4 vs newer GPUs)")
+    p.add_argument("--model-revision", default="main",
+                   help="hf: Hugging Face model branch, tag, or commit")
     p.add_argument("--max-new-tokens", type=int, default=256, help="hf: generation cap")
     p.add_argument("--jacobian-cache", default=None,
                    help="hf: directory to cache the fitted Jacobian")
+    p.add_argument("--jacobian-file", default=None,
+                   help="hf: precomputed Jacobian tensor from the paper fitter")
+    p.add_argument("--jacobian-metadata", default=None,
+                   help="hf: fitter metadata JSON (default: same stem as tensor)")
     p.add_argument("--record", default=None, metavar="DIR",
                    help="record each session as a Trace v1 under DIR/<trace_id>/")
     p.add_argument("--traces", default=None, metavar="DIR",
@@ -50,7 +58,10 @@ def main() -> None:
         kw["model_name"] = args.model
     if args.backend == "hf":
         kw.update(device=args.device, max_new_tokens=args.max_new_tokens,
-                  cache_dir=args.jacobian_cache)
+                  cache_dir=args.jacobian_cache, dtype=args.dtype,
+                  model_revision=args.model_revision,
+                  jacobian_path=args.jacobian_file,
+                  jacobian_metadata_path=args.jacobian_metadata)
         kw.setdefault("model_name", "Qwen/Qwen2.5-7B-Instruct")
 
     backend = make_backend(args.backend, **kw)

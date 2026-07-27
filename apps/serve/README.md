@@ -52,8 +52,17 @@ generated token's residual is read out through it.
 ```bash
 python -m j7scope_serve --backend hf \
   --model Qwen/Qwen2.5-7B-Instruct --layer 18 \
-  --jacobian-cache ~/.cache/j7scope
+  --model-revision main --dtype auto \
+  --jacobian-file ../../results/jacobian-qwen2.5-7b-l18.pt
 ```
+
+`--jacobian-file` 直接加载
+[`experiments/fit_paper_jacobian.py`](../../experiments/fit_paper_jacobian.py)
+生成的正式矩阵；省略它时才会用小语料和随机 position-local estimator 临时拟合，可通过
+`--jacobian-cache` 缓存，但这种快速路径只适合 wiring/preview，不应当作为研究结果。
+`--dtype auto` 在支持 BF16 的 CUDA GPU 上选择 `bfloat16`，在 T4 等旧卡上选择
+`float16`，CPU 则选择 `float32`。录制 manifest 会保存解析后的模型 revision、实际
+device/dtype、estimator 和 Jacobian SHA-1。
 
 ## Record & replay (platform P1)
 

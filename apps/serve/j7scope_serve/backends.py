@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import hashlib
 import itertools
+import json
+from pathlib import Path
 from typing import Iterator, List, NamedTuple, Sequence, Tuple
 
 
@@ -34,6 +36,7 @@ class Backend:
     model_name: str
     layer: int
     is_demo: bool = False
+    jacobian_estimator: str = "not_applicable"
 
     def generate(self, messages: Sequence[dict], **params) -> Iterator[Step]:
         raise NotImplementedError
@@ -86,6 +89,7 @@ def _jitter(seed: str) -> float:
 
 class MockBackend(Backend):
     is_demo = True
+    jacobian_estimator = "synthetic"
 
     def __init__(self, model_name: str = "j7scope-mock", layer: int = 18,
                  topk: int = 24, per_lang: int = 8):
@@ -152,14 +156,31 @@ class HFBackend(Backend):
     def __init__(self, model_name: str = "Qwen/Qwen2.5-7B-Instruct", layer: int = 18,
                  topk: int = 24, max_new_tokens: int = 256, device: str = None,
                  jacobian_corpus: Sequence[str] = None, n_probes: int = 16,
-                 cache_dir: str = None):
+                 cache_dir: str = None, dtype: str = "auto",
+                 model_revision: str = "main", jacobian_path: str = None,
+                 jacobian_metadata_path: str = None):
         self.model_name = model_name
         self.layer = layer
         self.topk = topk
         self.max_new_tokens = max_new_tokens
         self.device = device
+        self.dtype = dtype
+        self.model_revision = model_revision
+        self.model_revision_resolved = None
         self.jacobian_corpus = list(jacobian_corpus or _DEFAULT_JACOBIAN_CORPUS)
         self.n_probes = n_probes
+        self.jacobian_path = jacobian_path
+        self.jacobian_metadata_path = jacobian_metadata_path
+        self.jacobian_estimator = (
+            "paper_replicated_batch_vjp"
+            if jacobian_path
+            else "position_local_gaussian_vjp"
+        )
+        self.jacobian_corpus_id = "generic-v1"
+        self.jacobian_n_prompts = len(self.jacobian_corpus)
+        self.jacobian_position = -1
+        self.jacobian_seed = 0
+        self.jacobian_sha1 = None
         self.cache_dir = cache_dir
         self._model = None
         self._tok = None
@@ -169,18 +190,46 @@ class HFBackend(Backend):
     # ---- warm-up ----------------------------------------------------------
 
     def load(self) -> None:
-        import torch  # noqa: F401  (import-time check + used below)
+        import torch
         from j7scope.fitting import JLens, load_model, _Capture
 
-        model, tok = load_model(self.model_name, device=self.device)
+        dtype = self._resolve_dtype(torch)
+        model, tok = load_model(
+            self.model_name,
+            device=self.device,
+            dtype=dtype,
+            revision=self.model_revision,
+        )
+        self.device = str(model.device)
+        self.dtype = str(dtype).removeprefix("torch.")
+        self.model_revision_resolved = (
+            getattr(model.config, "_commit_hash", None) or self.model_revision
+        )
         jlens = JLens(model, tok, layer=self.layer)
 
-        J = self._load_cached_jacobian()
+        J = self._load_precomputed_jacobian()
+        if J is None:
+            J = self._load_cached_jacobian()
         if J is not None:
+            expected_shape = (
+                model.config.hidden_size,
+                model.config.hidden_size,
+            )
+            if not hasattr(J, "shape") or tuple(J.shape) != expected_shape:
+                raise ValueError(
+                    f"Jacobian shape must be {expected_shape}, "
+                    f"got {getattr(J, 'shape', None)}"
+                )
             jlens.J = J
         else:
-            jlens.estimate_jacobian(self.jacobian_corpus, n_probes=self.n_probes)
+            jlens.estimate_jacobian(
+                self.jacobian_corpus,
+                n_probes=self.n_probes,
+                position=self.jacobian_position,
+                seed=self.jacobian_seed,
+            )
             self._save_cached_jacobian(jlens.J)
+        self.jacobian_sha1 = self._tensor_sha1(jlens.J)
 
         # Persistent hook: capture the residual at layer l on every forward.
         cap = _Capture()
@@ -188,16 +237,102 @@ class HFBackend(Backend):
 
         self._model, self._tok, self._jlens, self._capture = model, tok, jlens, cap
 
+    def _resolve_dtype(self, torch):
+        allowed = {"auto", "bfloat16", "float16", "float32"}
+        if self.dtype not in allowed:
+            raise ValueError(
+                "dtype must be auto, bfloat16, float16, or float32"
+            )
+        if self.dtype != "auto":
+            return getattr(torch, self.dtype)
+        device = self.device or ("cuda" if torch.cuda.is_available() else "cpu")
+        if str(device).startswith("cuda"):
+            return (
+                torch.bfloat16
+                if torch.cuda.is_bf16_supported()
+                else torch.float16
+            )
+        if str(device).startswith("mps"):
+            return torch.float16
+        return torch.float32
+
+    @staticmethod
+    def _tensor_sha1(tensor) -> str:
+        return hashlib.sha1(
+            tensor.detach().float().cpu().contiguous().numpy().tobytes()
+        ).hexdigest()
+
     def _jacobian_cache_path(self):
         if not self.cache_dir:
             return None
         import os
+        revision = self.model_revision_resolved or self.model_revision
         key = hashlib.sha1(
-            (self.model_name + f"|L{self.layer}|" + "\n".join(self.jacobian_corpus)
-             + f"|p{self.n_probes}").encode("utf-8")
+            (self.model_name + f"|revision{revision}"
+             + f"|dtype{self.dtype}|L{self.layer}|" + "\n".join(self.jacobian_corpus)
+             + f"|{self.jacobian_estimator}|position{self.jacobian_position}"
+             + f"|p{self.n_probes}|seed{self.jacobian_seed}").encode("utf-8")
         ).hexdigest()[:16]
         os.makedirs(self.cache_dir, exist_ok=True)
         return os.path.join(self.cache_dir, f"jacobian-{key}.pt")
+
+    def _load_precomputed_jacobian(self):
+        if not self.jacobian_path:
+            return None
+        import torch
+        jacobian = torch.load(
+            self.jacobian_path, map_location="cpu", weights_only=True
+        )
+        metadata_path = Path(
+            self.jacobian_metadata_path
+            or Path(self.jacobian_path).with_suffix(".json")
+        )
+        if not metadata_path.exists():
+            raise FileNotFoundError(
+                f"Jacobian metadata not found: {metadata_path}. "
+                "Keep the fitter's .pt and .json outputs together, or pass "
+                "--jacobian-metadata."
+            )
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        configuration = metadata.get("configuration", {})
+        provenance = metadata.get("provenance", {})
+        result = metadata.get("result", {})
+        mismatches = []
+        expected_configuration = {
+            "model": self.model_name,
+            "layer": self.layer,
+        }
+        for key, expected in expected_configuration.items():
+            if configuration.get(key) != expected:
+                mismatches.append(
+                    f"{key}={configuration.get(key)!r} (expected {expected!r})"
+                )
+        resolved_revision = provenance.get("model_revision_resolved")
+        if (
+            resolved_revision
+            and self.model_revision_resolved
+            and resolved_revision != self.model_revision_resolved
+        ):
+            mismatches.append(
+                f"model revision={resolved_revision!r} "
+                f"(loaded {self.model_revision_resolved!r})"
+            )
+        actual_sha1 = self._tensor_sha1(jacobian)
+        if result.get("tensor_sha1") != actual_sha1:
+            mismatches.append("tensor SHA-1")
+        if provenance.get("estimator") != "paper_replicated_batch_vjp":
+            mismatches.append("estimator")
+        if mismatches:
+            raise ValueError(
+                "precomputed Jacobian metadata mismatch: "
+                + ", ".join(mismatches)
+            )
+        self.jacobian_estimator = provenance["estimator"]
+        self.jacobian_corpus_id = provenance.get("corpus_sha1")
+        self.jacobian_n_prompts = provenance.get("prompts_used")
+        self.n_probes = None
+        self.jacobian_position = None
+        return jacobian
 
     def _load_cached_jacobian(self):
         path = self._jacobian_cache_path()
@@ -264,5 +399,7 @@ def make_backend(kind: str, **kw) -> Backend:
     if kind == "hf":
         return HFBackend(**{k: v for k, v in kw.items()
                             if k in ("model_name", "layer", "topk", "max_new_tokens",
-                                     "device", "jacobian_corpus", "n_probes", "cache_dir")})
+                                     "device", "jacobian_corpus", "n_probes", "cache_dir",
+                                     "dtype", "model_revision", "jacobian_path",
+                                     "jacobian_metadata_path")})
     raise ValueError(f"unknown backend: {kind!r} (use 'mock' or 'hf')")
