@@ -86,6 +86,8 @@ traces/<trace_id>/
   "prompt": "…",
   "jacobian": {                          // J_l 溯源：可复现的前提
     "corpus_id": "generic-v1",
+    "estimator": "position_local_gaussian_vjp",
+    "position": -1,
     "n_prompts": 8, "n_probes": 16, "seed": 0,
     "sha1": "<J_l 张量哈希>"
   },
@@ -178,16 +180,42 @@ traces/<trace_id>/
 > 的碎 token（`WaitForSeconds`、`.ToDecimal`、`闹`…）。原因是：(1) 随机 Jacobian 估计
 > 严重欠采样（512 个样本估 896×896 矩阵，需要数千以上），(2) 0.5B 的 workspace 本就弱。
 > **含义：小模型 + CPU 可行预算下没有信号，这不是平台问题，正是 P3 需要 GPU + 更大模型的实证理由。**
-> **P3 前置动作**：先按 `estimate_jacobian` 的 TODO，用 `torch.func.jacrev` 精确 Jacobian
-> 和上游 `anthropics/jacobian-lens` 在一个已知案例上校验拟合数学，确认 7B 跑出来的是信号而非噪声，再租卡。
+> **P3 前置动作**：
+>
+> - [x] `j7scope.fitting.exact_jacobian_for_prompt` 用 `torch.func.jacrev` 实现
+>   position-local 精确 Jacobian；已同时通过解析线性尾部与随机 tiny-Qwen2 的独立
+>   full-graph VJP 校验。`experiments/validate_jacobian.py` 可复跑精确/随机估计对比，
+>   全程不下载模型。
+> - [x] `paper_jacobian_for_prompt` 独立实现上游 paper reduction：对每个 source
+>   position 汇总当前及未来 target positions，再跨 source positions 平均；执行路径
+>   与上游一致，复制 prompt 后做普通 VJP，并已在 tiny-Qwen2 上与逐标量 VJP 零误差
+>   交叉校验。J7Scope 当前 capture 路径仍是
+>   cloze 用的同位置 `∂h_L[p]/∂h_l[p]` 变体，两者不会静默混用。
+> - [x] `estimate_jacobian_paper` 已加入逐 prompt 原子 checkpoint/resume、完整语料
+>   SHA-1 和模型/层/参数一致性校验；`experiments/fit_paper_jacobian.py` 提供 48 GB
+>   GPU preflight、WikiText streaming、benchmark、峰值显存/耗时与最终矩阵元数据。
+> - [x] `experiments/reproduce_upstream.py` 已固定上游发布配置
+>   `Qwen/Qwen3.5-4B` + `neuronpedia/jacobian-lens@qwen-n1000`，记录解析后的 model/lens
+>   revision、GPU 和逐层 J-lens/logit-lens 读出；支持无下载 `--dry-run` 与下载前
+>   `--preflight-only`。云 GPU 操作与 credits 申请见 `docs/gpu-cloud-runbook.md`。
+> - [ ] 在云 GPU 执行该已知案例，并据真实读出锁定 P3 正式 estimator；本地随机 tiny
+>   模型只能校验数学实现，不能校验 lens 质量。
+> - [ ] 上述校验通过并锁定正式 estimator 后再租卡，避免把 GPU 预算花在数学口径错误
+>   或尚未收敛的矩阵上。
 
 ### P4 · Colab 采集笔记本 + 社区提交流程
 
 - **目标**：把 GPU 成本外包给社区，形成 trace 供给。
 - **交付物**
-  - `notebooks/capture_colab.ipynb`：T4 免费层跑 Qwen2.5-1.5B-Instruct，10 分钟采一条自定义 trace。
-  - `CONTRIBUTING.md` + trace 提交模板 + CI 校验（schema、`is_demo` 标注、`sharedness` 未在前端重算）。
-- **验收**：外部贡献者能在 Colab 免费层产出通过 CI 的 trace 并合入 gallery。
+  - [x] `notebooks/capture_colab.ipynb`：免费 GPU 跑 Qwen2.5-1.5B-Instruct，
+    `dtype=auto` 在 T4 使用 fp16、新卡使用 bf16；采一条自定义 preview trace 并下载 ZIP。
+  - [x] `experiments/capture_trace.py`：非交互单 trace 入口；记录 model revision、GPU、
+    dtype、estimator 与 Jacobian SHA-1，输出后自动重建并验证 gallery。
+  - [x] `CONTRIBUTING.md` + PR 模板 + GitHub Actions 校验（schema、索引、provenance、
+    `is_demo`/`preview`、sharedness definition、前端未重算严谨层）。
+- **验收**：
+  - [x] 本地无 GPU dry-run、demo gallery 端到端生成/校验、CI 命令通过。
+  - [ ] 首个外部贡献者在 Colab 免费层产出通过 CI 的 trace 并合入 gallery。
 
 ### P5 · 严谨层完全体（并排对齐 + null 带 + 可展开审计）
 

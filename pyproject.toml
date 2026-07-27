@@ -18,6 +18,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "jupyter", "matplotlib"]
+fit = ["datasets>=3.0"]
+upstream = [
+    "jlens @ git+https://github.com/anthropics/jacobian-lens.git@581d398613e5602a5af361e1c34d3a92ea82ba8e",
+]
 
 [tool.setuptools]
 packages = ["j7scope"]

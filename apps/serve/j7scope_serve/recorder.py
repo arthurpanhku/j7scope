@@ -56,6 +56,8 @@ def record_trace(
     lexicon: Dict[str, str],
     trace_id: Optional[str] = None,
     concept: Optional[str] = None,
+    language: Optional[str] = None,
+    capture_tool: str = "j7scope_serve --record",
     seed: int = 0,
 ) -> Optional[Path]:
     """Write one Trace v1 from buffered token records. Returns the trace dir.
@@ -67,7 +69,7 @@ def record_trace(
         return None
 
     trace_id = trace_id or ("rec-" + uuid.uuid4().hex[:8])
-    language = _dominant_language(buffered)
+    language = language or _dominant_language(buffered)
 
     tokens = rigor.compute_trace_rigor(buffered, lexicon, seed=seed)
 
@@ -76,17 +78,36 @@ def record_trace(
         "trace_id": trace_id,
         "kind": "single",
         "model": backend.model_name,
+        "revision": getattr(backend, "model_revision_resolved", None),
         "layer": backend.layer,
         "language": language,
         "concept": concept,
         "prompt": prompt,
         "jacobian": {
-            "corpus_id": "mock-synthetic" if is_demo else "generic-v1",
-            "sha1": None,
+            "corpus_id": (
+                "mock-synthetic"
+                if is_demo
+                else getattr(backend, "jacobian_corpus_id", "generic-v1")
+            ),
+            "estimator": getattr(
+                backend, "jacobian_estimator",
+                "synthetic" if is_demo else "unknown",
+            ),
+            "position": getattr(backend, "jacobian_position", None),
+            "n_prompts": getattr(
+                backend,
+                "jacobian_n_prompts",
+                len(getattr(backend, "jacobian_corpus", [])),
+            ),
+            "n_probes": getattr(backend, "n_probes", None),
+            "seed": getattr(backend, "jacobian_seed", None),
+            "sha1": getattr(backend, "jacobian_sha1", None),
         },
         "capture": {
-            "tool": "j7scope_serve --record",
+            "tool": capture_tool,
             "backend": type(backend).__name__,
+            "device": getattr(backend, "device", None),
+            "dtype": getattr(backend, "dtype", None),
             "created_at": datetime.now(timezone.utc).isoformat(),
         },
         "is_demo": is_demo,
