@@ -1,6 +1,6 @@
 {
   "capture": {
-    "created_at": "2026-07-22T12:31:46.837569+00:00",
+    "created_at": "2026-07-22T00:00:00+00:00",
     "tool": "build_demo_trace.py"
   },
   "concept": null,
@@ -8,6 +8,11 @@
   "is_demo": true,
   "jacobian": {
     "corpus_id": "demo-synthetic",
+    "estimator": "synthetic",
+    "n_probes": null,
+    "n_prompts": 0,
+    "position": null,
+    "seed": 0,
     "sha1": null
   },
   "kind": "parallel_member",

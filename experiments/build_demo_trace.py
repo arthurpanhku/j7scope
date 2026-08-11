@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +25,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from j7scope import rigor
+from j7scope.contrast import build_contrast
 from j7scope.artifacts import write_json
 from j7scope.data import load_parallel_pairs
 from j7scope.trace import write_trace
@@ -40,6 +40,7 @@ CONCEPTS = {
 }
 FILLER_ZH = ["的", "一种", "行为", "这", "属于"]
 FILLER_EN = ["a", "kind", "of", "this", "is"]
+DEMO_CREATED_AT = "2026-07-22T00:00:00+00:00"
 
 # A session narrative: (surface_token, concept_or_None). Abstract concepts are
 # interspersed with fillers; the concrete entity shows weaker cross-lingual tie.
@@ -144,7 +145,7 @@ def build_trace(narrative, language: str, lexicon, *, trace_id: str,
             "sha1": None,
         },
         "capture": {"tool": "build_demo_trace.py",
-                    "created_at": datetime.now(timezone.utc).isoformat()},
+                    "created_at": DEMO_CREATED_AT},
         "is_demo": True,
         "doi": None,
         "parallel_group": parallel_group,
@@ -187,13 +188,22 @@ def main() -> None:
     m_zh, t_zh, mt_zh = build_trace(ZH_NARRATIVE, "zh", lexicon,
                                     trace_id=f"{group}-zh", parallel_group=group)
     position_map = [[i, i] for i in range(len(NARRATIVE))]  # identical structure
-    # Cross-trace rigor: A = en session, B = zh session, at aligned positions.
-    pair_rigor = rigor.compute_pair_rigor(t_en, t_zh, position_map, lexicon)
+    # Cross-trace rigor + pair-level Contrast Lab evidence.  The aggregate
+    # permutation null and trajectories are baked here; the browser only renders.
+    contrast = build_contrast(
+        {"manifest": m_en, "tokens": t_en, "metrics": mt_en},
+        {"manifest": m_zh, "tokens": t_zh, "metrics": mt_zh},
+        lexicon,
+        position_map=position_map,
+        n_permutations=1000,
+        n_boot=1000,
+    )
     align = {
         "parallel_group": group,
         "members": {"en": m_en["trace_id"], "zh": m_zh["trace_id"]},
         "position_map": position_map,
-        "pair_rigor": pair_rigor,
+        "pair_rigor": contrast["pair_rigor"],
+        "contrast": contrast,
     }
     write_trace(args.out / m_en["trace_id"], manifest=m_en, tokens=t_en,
                 metrics=mt_en, align=align)

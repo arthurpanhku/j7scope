@@ -1,4 +1,1063 @@
 {
+  "contrast": {
+    "answer_identity_check": {
+      "controlled": null,
+      "reason": "manifests need boolean correct and string answer_identity fields",
+      "status": "not_assessable"
+    },
+    "calibration": {
+      "informative_positions": [
+        3,
+        6,
+        13,
+        18,
+        23
+      ],
+      "n_aligned_positions": 25,
+      "n_informative_positions": 5,
+      "null": {
+        "mean": 0.3708,
+        "metric": "paired_mean_concept_overlap",
+        "n": 1000,
+        "p05": 0.0,
+        "p95": 0.8,
+        "seed": 0
+      },
+      "observed": 1.0,
+      "same_lang_ceiling": 1.0,
+      "sharedness": {
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "definition": "(paired_observed_mean - permutation_null.mean) / (same_lang_ceiling - permutation_null.mean)",
+        "value": 1.0
+      },
+      "token_sharedness_definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)"
+    },
+    "concept_trajectories": [
+      {
+        "concept": "deception",
+        "coverage": 0.08,
+        "rank_a": [
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          3,
+          null
+        ],
+        "rank_b": [
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          3,
+          null
+        ]
+      },
+      {
+        "concept": "emotion",
+        "coverage": 0.08,
+        "rank_a": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          3,
+          null
+        ],
+        "rank_b": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          3,
+          null
+        ]
+      },
+      {
+        "concept": "concession",
+        "coverage": 0.04,
+        "rank_a": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rank_b": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "concept": "entity",
+        "coverage": 0.04,
+        "rank_a": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          null
+        ],
+        "rank_b": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          null
+        ]
+      },
+      {
+        "concept": "manipulation",
+        "coverage": 0.04,
+        "rank_a": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "rank_b": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          1,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    ],
+    "mode": "cross_language",
+    "pair_rigor": [
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 0,
+        "ib": 0,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 0,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 1,
+        "ib": 1,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 1,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 2,
+        "ib": 2,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 2,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 1.0,
+        "ia": 3,
+        "ib": 3,
+        "null": {
+          "mean": 0.0417,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 3,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [
+          "deception"
+        ],
+        "sharedness": {
+          "ci95": [
+            1.0,
+            1.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 1.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 4,
+        "ib": 4,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 4,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 5,
+        "ib": 5,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 5,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 1.0,
+        "ia": 6,
+        "ib": 6,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 6,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [
+          "manipulation"
+        ],
+        "sharedness": {
+          "ci95": [
+            1.0,
+            1.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 1.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 7,
+        "ib": 7,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 7,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 8,
+        "ib": 8,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 8,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 9,
+        "ib": 9,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 9,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 10,
+        "ib": 10,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 10,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 11,
+        "ib": 11,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 11,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 12,
+        "ib": 12,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 12,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 1.0,
+        "ia": 13,
+        "ib": 13,
+        "null": {
+          "mean": 0.0417,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 13,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [
+          "emotion"
+        ],
+        "sharedness": {
+          "ci95": [
+            1.0,
+            1.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 1.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 14,
+        "ib": 14,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 14,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 15,
+        "ib": 15,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 15,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 16,
+        "ib": 16,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 16,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 17,
+        "ib": 17,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 17,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 1.0,
+        "ia": 18,
+        "ib": 18,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 18,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [
+          "concession"
+        ],
+        "sharedness": {
+          "ci95": [
+            1.0,
+            1.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 1.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 19,
+        "ib": 19,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 19,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 20,
+        "ib": 20,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 20,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 21,
+        "ib": 21,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 21,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 22,
+        "ib": 22,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 22,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      },
+      {
+        "cross_lang_overlap": 1.0,
+        "ia": 23,
+        "ib": 23,
+        "null": {
+          "mean": 0.0833,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.85
+        },
+        "position": 23,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [
+          "deception",
+          "emotion",
+          "entity"
+        ],
+        "sharedness": {
+          "ci95": [
+            -0.0909,
+            1.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 1.0
+        }
+      },
+      {
+        "cross_lang_overlap": 0.0,
+        "ia": 24,
+        "ib": 24,
+        "null": {
+          "mean": 0.0,
+          "metric": "concept_overlap",
+          "n": 24,
+          "p05": 0.0,
+          "p95": 0.0
+        },
+        "position": 24,
+        "same_lang_baseline": 1.0,
+        "shared_concepts": [],
+        "sharedness": {
+          "ci95": [
+            0.0,
+            0.0
+          ],
+          "definition": "(cross_lang_overlap - null.mean) / (same_lang_baseline - null.mean)",
+          "value": 0.0
+        }
+      }
+    ],
+    "position_map": [
+      [
+        0,
+        0
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        3,
+        3
+      ],
+      [
+        4,
+        4
+      ],
+      [
+        5,
+        5
+      ],
+      [
+        6,
+        6
+      ],
+      [
+        7,
+        7
+      ],
+      [
+        8,
+        8
+      ],
+      [
+        9,
+        9
+      ],
+      [
+        10,
+        10
+      ],
+      [
+        11,
+        11
+      ],
+      [
+        12,
+        12
+      ],
+      [
+        13,
+        13
+      ],
+      [
+        14,
+        14
+      ],
+      [
+        15,
+        15
+      ],
+      [
+        16,
+        16
+      ],
+      [
+        17,
+        17
+      ],
+      [
+        18,
+        18
+      ],
+      [
+        19,
+        19
+      ],
+      [
+        20,
+        20
+      ],
+      [
+        21,
+        21
+      ],
+      [
+        22,
+        22
+      ],
+      [
+        23,
+        23
+      ],
+      [
+        24,
+        24
+      ]
+    ],
+    "provenance": {
+      "analysis": {
+        "n_boot": 1000,
+        "n_permutations": 1000,
+        "schema_version": 1,
+        "seed": 0,
+        "tool": "j7scope.contrast.build_contrast"
+      },
+      "trace_a": {
+        "capture_tool": "build_demo_trace.py",
+        "corpus_id": "demo-synthetic",
+        "created_at": "2026-07-22T00:00:00+00:00",
+        "estimator": "synthetic",
+        "is_demo": true,
+        "language": "en",
+        "layer": 18,
+        "lens_sha1": null,
+        "model": "demo-synthetic",
+        "model_revision": null,
+        "trace_id": "demo-parallel-en"
+      },
+      "trace_b": {
+        "capture_tool": "build_demo_trace.py",
+        "corpus_id": "demo-synthetic",
+        "created_at": "2026-07-22T00:00:00+00:00",
+        "estimator": "synthetic",
+        "is_demo": true,
+        "language": "zh",
+        "layer": 18,
+        "lens_sha1": null,
+        "model": "demo-synthetic",
+        "model_revision": null,
+        "trace_id": "demo-parallel-zh"
+      }
+    },
+    "schema_version": 1,
+    "trace_a": "demo-parallel-en",
+    "trace_b": "demo-parallel-zh"
+  },
   "members": {
     "en": "demo-parallel-en",
     "zh": "demo-parallel-zh"

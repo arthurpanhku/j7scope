@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>J7Scope · Contrast Lab</title>
+<link rel="stylesheet" href="assets/jspace.css" />
+</head>
+<body>
+  <header>
+    <h1><a href="./">J7Scope</a> <span class="sub">Contrast Lab · 成对证据显微镜</span></h1>
+    <nav>
+      <a id="classicCompare" href="compare.html">Classic Compare</a>
+      <a href="method.html">Methodology</a>
+      <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
+    </nav>
+  </header>
+
+  <p class="lede">Compare matched traces, inspect one concept family at a time,
+    calibrate the observation against a paired permutation null, check answer-identity
+    confounds, and optionally run one causal activation patch on a connected GPU sidecar.</p>
+
+  <div class="lab-toolbar">
+    <label>实验对 <select id="groupSelect"></select></label>
+    <div class="lab-tabs" role="tablist" aria-label="Evidence mode">
+      <button class="lab-tab active" data-mode="cross" role="tab" aria-selected="true">跨语言</button>
+      <button class="lab-tab" data-mode="intervention" role="tab" aria-selected="false">自然 ↔ 干预</button>
+      <button class="lab-tab" data-mode="correctness" role="tab" aria-selected="false">正确 ↔ 错误</button>
+    </div>
+    <span class="spacer"></span>
+    <span class="badge" id="gpuBadge">GPU sidecar · 未连接</span>
+    <button id="exportClaim" disabled>导出 Claim Card</button>
+  </div>
+
+  <div id="lab"><p class="empty">Loading paired traces…</p></div>
+
+  <footer>
+    All calibration values are baked into <code>align.json</code> by
+    <code>j7scope.contrast</code>. The browser renders them but does not recompute
+    sharedness. A green result is evidence above the configured null, not proof of a
+    complete or universal representation.
+  </footer>
+
+<script src="assets/jspace.js"></script>
+<script>
+(function () {
+  "use strict";
+  var J = window.JSpace, $ = function (id) { return document.getElementById(id); };
+  var params = new URLSearchParams(location.search);
+  var A = null, B = null, C = null, MAP = null, GROUP = null;
+  var pos = 0, selectedConcept = null, interventionResult = null;
+  var gpuReady = false;
+
+  function fmt(value, digits) {
+    return typeof value === "number" && isFinite(value) ? value.toFixed(digits == null ? 2 : digits) : "n/a";
+  }
+  function attr(value) {
+    return J.esc(value).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+  function badge(text, cls) {
+    return '<span class="badge ' + (cls || "") + '">' + J.esc(text) + '</span>';
+  }
+  function setMode(mode) {
+    Array.prototype.forEach.call(document.querySelectorAll(".lab-tab"), function (button) {
+      var active = button.getAttribute("data-mode") === mode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+    ["cross", "intervention", "correctness"].forEach(function (name) {
+      var panel = $("mode-" + name);
+      if (panel) panel.style.display = name === mode ? "" : "none";
+    });
+  }
+
+  function pairPanel(side, trace, tokenIndex) {
+    var manifest = trace.manifest;
+    return '<section class="lab-trace">' +
+      '<div class="lab-trace-head"><b>' + side + ' · ' + J.esc(manifest.language.toUpperCase()) + '</b>' +
+      '<span>' + J.esc(manifest.trace_id) + ' · L' + manifest.layer + '</span></div>' +
+      '<div class="stream" id="stream-' + side.toLowerCase() + '"></div>' +
+      '<div class="lab-token-readout"><div class="col zh"><h2><span class="dot"></span>中文</h2><div class="rows" id="zh-' + side.toLowerCase() + '"></div></div>' +
+      '<div class="col en"><h2><span class="dot"></span>English</h2><div class="rows" id="en-' + side.toLowerCase() + '"></div></div></div>' +
+      '</section>';
+  }
+
+  function shell() {
+    var calibration = C.calibration, shared = calibration.sharedness;
+    var confound = C.answer_identity_check || {};
+    var concepts = C.concept_trajectories || [];
+    selectedConcept = selectedConcept || (concepts[0] && concepts[0].concept);
+    $("lab").innerHTML =
+      '<div class="lab-summary">' +
+        badge(C.mode.replace("_", " ")) +
+        (A.manifest.is_demo || B.manifest.is_demo ? badge("DEMO · synthetic", "demo") : badge("RECORDED", "on")) +
+        '<span>' + MAP.length + ' aligned positions</span><span>' + J.esc(A.manifest.model) + '</span>' +
+      '</div>' +
+      '<div class="controls"><button id="prevPos">◀</button><button id="nextPos">▶</button>' +
+        '<input type="range" id="pairScrub" min="0" max="' + (MAP.length - 1) + '" value="0" />' +
+        '<span class="pos" id="pairPos">1 / ' + MAP.length + '</span></div>' +
+      '<div class="lab-pair">' + pairPanel("A", A, 0) + pairPanel("B", B, 0) + '</div>' +
+      '<section class="lab-evidence" id="mode-cross">' +
+        '<div><h2>当前位置 · Paired rigor</h2><div class="rigor" id="pairRigor"></div></div>' +
+        '<aside class="lab-calibration"><h2>整对校准 · Pair calibration</h2>' +
+          '<dl><div><dt>observed</dt><dd>' + fmt(calibration.observed) + '</dd></div>' +
+          '<div><dt>permutation null · 5–95%</dt><dd>' + fmt(calibration.null.p05) + '–' + fmt(calibration.null.p95) + '</dd></div>' +
+          '<div><dt>same-language ceiling</dt><dd>' + fmt(calibration.same_lang_ceiling) + '</dd></div>' +
+          '<div><dt>sharedness · 95% CI</dt><dd>' + fmt(shared.value) + ' · ' + fmt(shared.ci95[0]) + '–' + fmt(shared.ci95[1]) + '</dd></div></dl>' +
+        '</aside></section>' +
+      '<section class="lab-mode-panel" id="mode-intervention" style="display:none">' +
+        '<h2>GPU causal A/B · Activation patch</h2>' +
+        '<p class="caption">The prompts come from the selected traces. Patch coordinates default to the current aligned token.</p>' +
+        '<div class="intervention-form"><label>patch layer <input id="patchLayer" type="number" min="0" value="' + Math.max(0, Number(A.manifest.layer) - 6) + '" /></label>' +
+          '<label>top-k <input id="patchTopK" type="number" min="1" max="100" value="20" /></label>' +
+          '<button id="runPatch"' + (gpuReady ? "" : " disabled") + '>运行干预</button></div>' +
+        '<div class="intervention-result" id="patchResult">' + (gpuReady ? "Ready." : "Connect an HF GPU sidecar to enable this probe.") + '</div>' +
+      '</section>' +
+      '<section class="lab-mode-panel" id="mode-correctness" style="display:none">' +
+        '<h2>Answer-identity confound check</h2>' +
+        '<div class="confound ' + J.esc(confound.status || "not_assessable") + '"><b>' + J.esc(confound.status || "not_assessable") + '</b><span>' + J.esc(confound.reason || "No check available") + '</span></div>' +
+        '<p class="caption">For an assessable correctness pair, add structured <code>correct</code> and <code>answer_identity</code> fields to both manifests, then rebuild the contrast.</p>' +
+      '</section>' +
+      '<section class="lab-trajectory"><div class="lab-section-head"><div><h2>概念 rank 轨迹</h2><span>lower rank is stronger · selected concept only</span></div>' +
+        '<select id="conceptSelect">' + concepts.map(function (row) { return '<option value="' + attr(row.concept) + '"' + (row.concept === selectedConcept ? " selected" : "") + '>' + J.esc(row.concept) + ' · coverage ' + Math.round(row.coverage * 100) + '%</option>'; }).join("") + '</select></div>' +
+        '<div class="trajectory-chart" id="trajectoryChart"></div>' +
+      '</section>' +
+      '<details class="lab-provenance"><summary>实验溯源 · provenance</summary><pre>' + J.esc(JSON.stringify(C.provenance, null, 2)) + '</pre></details>';
+
+    $("prevPos").onclick = function () { show(pos - 1); };
+    $("nextPos").onclick = function () { show(pos + 1); };
+    $("pairScrub").oninput = function () { show(parseInt(this.value, 10)); };
+    $("conceptSelect").onchange = function () { selectedConcept = this.value; renderTrajectory(); };
+    if ($("runPatch")) $("runPatch").onclick = runIntervention;
+    $("exportClaim").disabled = false;
+    show(0); renderTrajectory();
+  }
+
+  function show(next) {
+    pos = J.clamp(next, 0, MAP.length - 1);
+    var pair = MAP[pos], ta = A.tokens[pair[0]], tb = B.tokens[pair[1]];
+    J.renderStream($("stream-a"), A.tokens.map(function (t) { return t.token; }), pair[0], function (i) {
+      var hit = MAP.findIndex(function (p) { return p[0] === i; }); if (hit >= 0) show(hit);
+    });
+    J.renderStream($("stream-b"), B.tokens.map(function (t) { return t.token; }), pair[1], function (i) {
+      var hit = MAP.findIndex(function (p) { return p[1] === i; }); if (hit >= 0) show(hit);
+    });
+    J.renderColumn($("zh-a"), ta.readout.zh); J.renderColumn($("en-a"), ta.readout.en);
+    J.renderColumn($("zh-b"), tb.readout.zh); J.renderColumn($("en-b"), tb.readout.en);
+    var rigor = C.pair_rigor[pos];
+    J.renderRigor($("pairRigor"), { token: "aligned position " + (pos + 1), concept: (rigor.shared_concepts || []).join(", ") || null, rigor: rigor });
+    $("pairScrub").value = pos; $("pairPos").textContent = (pos + 1) + " / " + MAP.length;
+    history.replaceState(null, "", "?group=" + encodeURIComponent(GROUP) + "#pos=" + pos);
+    renderTrajectory();
+  }
+
+  function renderTrajectory() {
+    var host = $("trajectoryChart");
+    if (!host || !C) return;
+    var row = (C.concept_trajectories || []).filter(function (item) { return item.concept === selectedConcept; })[0];
+    if (!row) { host.innerHTML = '<p class="empty">No concept trajectory in this pair.</p>'; return; }
+    var width = 900, height = 230, left = 44, right = 16, top = 18, bottom = 35;
+    var values = row.rank_a.concat(row.rank_b).filter(function (v) { return typeof v === "number"; });
+    var maxRank = Math.max(5, Math.min(50, Math.max.apply(Math, values.length ? values : [5])));
+    function x(i) { return left + (MAP.length < 2 ? 0 : i / (MAP.length - 1)) * (width - left - right); }
+    function y(rank) { return top + ((rank - 1) / Math.max(1, maxRank - 1)) * (height - top - bottom); }
+    function series(values, cls) {
+      var output = [], previous = null;
+      values.forEach(function (rank, i) {
+        if (typeof rank !== "number") { previous = null; return; }
+        var point = [x(i), y(Math.min(rank, maxRank))];
+        if (previous) output.push('<line class="' + cls + '" x1="' + previous[0] + '" y1="' + previous[1] + '" x2="' + point[0] + '" y2="' + point[1] + '" />');
+        output.push('<circle class="' + cls + '" cx="' + point[0] + '" cy="' + point[1] + '" r="4"><title>position ' + (i + 1) + ' · rank ' + rank + '</title></circle>');
+        previous = point;
+      });
+      return output.join("");
+    }
+    var ticks = [1, Math.ceil(maxRank / 2), maxRank];
+    host.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="Concept rank trajectory for ' + J.esc(row.concept) + '">' +
+      ticks.map(function (rank) { return '<line class="grid" x1="' + left + '" y1="' + y(rank) + '" x2="' + (width - right) + '" y2="' + y(rank) + '"/><text x="' + (left - 8) + '" y="' + (y(rank) + 4) + '" text-anchor="end">' + rank + '</text>'; }).join("") +
+      '<line class="cursor" x1="' + x(pos) + '" y1="' + top + '" x2="' + x(pos) + '" y2="' + (height - bottom) + '" />' +
+      series(row.rank_a, "series-a") + series(row.rank_b, "series-b") +
+      '<text x="' + left + '" y="' + (height - 8) + '">position 1</text><text x="' + (width - right) + '" y="' + (height - 8) + '" text-anchor="end">position ' + MAP.length + '</text>' +
+      '<g class="legend"><circle class="series-a" cx="' + (width - 190) + '" cy="12" r="4"/><text x="' + (width - 180) + '" y="16">Trace A</text><circle class="series-b" cx="' + (width - 90) + '" cy="12" r="4"/><text x="' + (width - 80) + '" y="16">Trace B</text></g></svg>';
+  }
+
+  function runIntervention() {
+    var button = $("runPatch"), output = $("patchResult"), pair = MAP[pos];
+    button.disabled = true; output.textContent = "Running activation patch…";
+    fetch("jspace/interventions", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ source_prompt: A.manifest.prompt, target_prompt: B.manifest.prompt,
+        patch_layer: parseInt($("patchLayer").value, 10), source_position: pair[0], target_position: pair[1],
+        topk: parseInt($("patchTopK").value, 10) })
+    }).then(function (response) { return response.json().then(function (body) { if (!response.ok) throw new Error(body.error || response.statusText); return body; }); })
+      .then(function (body) { interventionResult = body; output.innerHTML = '<pre>' + J.esc(JSON.stringify(body, null, 2)) + '</pre>'; })
+      .catch(function (error) { output.textContent = "Failed: " + error.message; })
+      .finally(function () { button.disabled = !gpuReady; });
+  }
+
+  function exportClaim() {
+    var calibration = C.calibration, rigor = C.pair_rigor[pos];
+    var payload = {
+      schema_version: 1, kind: "j7scope.claim_card", exported_at: new Date().toISOString(),
+      deep_link: location.href, mode: C.mode, trace_a: C.trace_a, trace_b: C.trace_b,
+      selection: { aligned_position: pos, token_indices: MAP[pos], concept: selectedConcept },
+      claim: { observed: calibration.observed, null: calibration.null,
+        same_lang_ceiling: calibration.same_lang_ceiling, sharedness: calibration.sharedness,
+        selected_position_rigor: rigor, answer_identity_check: C.answer_identity_check },
+      intervention: interventionResult, provenance: C.provenance
+    };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob), link = document.createElement("a");
+    link.href = url; link.download = "claim-" + C.trace_a + "--" + C.trace_b + "-p" + pos + ".json"; link.click();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function loadGroup(group, index) {
+    GROUP = group; selectedConcept = null; interventionResult = null;
+    var members = index.traces.filter(function (trace) { return trace.parallel_group === group; });
+    if (members.length < 2) throw new Error("group needs at least two traces");
+    var first = members.filter(function (trace) { return trace.language === "en"; })[0] || members[0];
+    var second = members.filter(function (trace) { return trace.language === "zh"; })[0] || members[1];
+    $("lab").innerHTML = '<p class="empty">Loading ' + J.esc(group) + '…</p>';
+    $("classicCompare").href = "compare.html?group=" + encodeURIComponent(group);
+    return Promise.all([J.fetchTrace(first.trace_id), J.fetchTrace(second.trace_id)]).then(function (traces) {
+      A = traces[0]; B = traces[1];
+      if (!A.align || !A.align.contrast) throw new Error("pair has no precomputed contrast; run experiments/build_contrast.py");
+      C = A.align.contrast; MAP = C.position_map; shell();
+      var hash = location.hash.match(/pos=(\d+)/); if (hash) show(J.clamp(parseInt(hash[1], 10), 0, MAP.length - 1));
+    });
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll(".lab-tab"), function (button) {
+    button.onclick = function () { setMode(button.getAttribute("data-mode")); };
+  });
+  $("exportClaim").onclick = exportClaim;
+  fetch("health").then(function (response) { return response.ok ? response.json() : null; }).then(function (health) {
+    gpuReady = !!(health && health.capabilities && health.capabilities.activation_patch);
+    $("gpuBadge").textContent = gpuReady ? "GPU sidecar · 干预可用" : "GPU sidecar · 未连接";
+    $("gpuBadge").classList.toggle("on", gpuReady);
+    if ($("runPatch")) {
+      $("runPatch").disabled = !gpuReady;
+      if (gpuReady && $("patchResult")) $("patchResult").textContent = "Ready.";
+    }
+  }).catch(function () {});
+
+  J.fetchIndex().then(function (index) {
+    var groups = [];
+    index.traces.forEach(function (trace) { if (trace.parallel_group && groups.indexOf(trace.parallel_group) < 0) groups.push(trace.parallel_group); });
+    if (!groups.length) throw new Error("no paired trace groups in index");
+    var requested = params.get("group"), initial = groups.indexOf(requested) >= 0 ? requested : groups[0];
+    $("groupSelect").innerHTML = groups.map(function (group) { return '<option value="' + attr(group) + '"' + (group === initial ? " selected" : "") + '>' + J.esc(group) + '</option>'; }).join("");
+    $("groupSelect").onchange = function () { loadGroup(this.value, index).catch(showError); };
+    return loadGroup(initial, index);
+  }).catch(showError);
+
+  function showError(error) { $("lab").innerHTML = '<p class="empty" style="color:var(--warn)">Contrast Lab failed: ' + J.esc(error.message || error) + '</p>'; }
+})();
+</script>
+</body>
+</html>

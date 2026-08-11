@@ -72,10 +72,10 @@
   }
   function groupCard(g, members) {
     var langs = members.map(function (m) { return m.language; }).join(" ↔ ");
-    return '<a class="card" href="compare.html?group=' + encodeURIComponent(g) + '">' +
-      '<h3>' + J.esc(g) + ' <span class="sub">side-by-side</span></h3>' +
+    return '<a class="card" href="contrast.html?group=' + encodeURIComponent(g) + '">' +
+      '<h3>' + J.esc(g) + ' <span class="sub">Contrast Lab</span></h3>' +
       '<div class="meta"><span>' + members.length + ' aligned traces</span><span>' + J.esc(langs) + '</span></div>' +
-      '<div class="tags">' + tag("compare zh ↔ en") + (members[0].is_demo ? tag("DEMO", "demo") : "") + '</div></a>';
+      '<div class="tags">' + tag("paired evidence") + tag("null + ceiling") + (members[0].is_demo ? tag("DEMO", "demo") : "") + '</div></a>';
   }
 })();
 </script>

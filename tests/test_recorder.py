@@ -115,3 +115,38 @@ def test_hf_backend_rejects_precomputed_jacobian_without_metadata(tmp_path):
 
     with pytest.raises(FileNotFoundError, match="metadata"):
         backend._load_precomputed_jacobian()
+
+
+def test_hf_backend_exposes_activation_patch_with_provenance(monkeypatch):
+    import j7scope.patching
+
+    backend = HFBackend(model_name="test/model", layer=12)
+    backend._model = object()
+    backend._jlens = object()
+    backend.model_revision_resolved = "revision-1"
+    backend.jacobian_sha1 = "lens-sha"
+
+    def fake_patch(jlens, source, target, patch_layer, src_pos, tgt_pos, k):
+        assert jlens is backend._jlens
+        assert (source, target, patch_layer, src_pos, tgt_pos, k) == (
+            "source", "target", 6, 2, 3, 5
+        )
+        return {
+            "readout": [("concept", 4.2)],
+            "next_token": [("answer", 3.1)],
+        }
+
+    monkeypatch.setattr(j7scope.patching, "patch_and_readout", fake_patch)
+    result = backend.intervene(
+        source_prompt="source",
+        target_prompt="target",
+        patch_layer=6,
+        source_position=2,
+        target_position=3,
+        topk=5,
+    )
+
+    assert backend.supports_intervention is True
+    assert result["readout"] == [("concept", 4.2)]
+    assert result["jacobian_sha1"] == "lens-sha"
+    assert result["model_revision"] == "revision-1"
