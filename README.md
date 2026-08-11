@@ -113,6 +113,18 @@ python -m j7scope_serve --backend hf \
 
 <p align="center"><img src="docs/screenshots/compare.png" width="840" alt="Compare view: cross-trace rigor strip + aligned zh/en sessions" /></p>
 
+**Contrast Lab · 成对证据显微镜** —— 在 Compare 之上加入整对 permutation
+null、同语言上限、bootstrap CI、单概念 rank 轨迹和答案身份混杂检查。指标由
+[`j7scope/contrast.py`](j7scope/contrast.py) 离线写入 `align.json`，浏览器只展示；连接
+`hf` GPU sidecar 后，还可从同一页面发起一次 activation patch，并把当前证据、干预
+结果与完整 provenance 导出为 Claim Card。
+
+```bash
+# 为任意两条已有 Trace v1 生成/更新 Contrast Lab 成对证据
+python experiments/build_contrast.py trace-a trace-b \
+  --trace-root results/traces --mode cross_language
+```
+
 **Gallery** —— 所有 trace 的入口（读 `traces/index.json`，平行对自动归为一张对比卡）。
 
 <p align="center"><img src="docs/screenshots/gallery.png" width="840" alt="J-Space Gallery landing page" /></p>
@@ -185,12 +197,14 @@ j7scope/
 │   ├── fitting.py             # J-lens 拟合 + 残差捕获（sidecar 复用）
 │   ├── patching.py            # M2 的跨语言 activation patching
 │   ├── metrics.py             # CKA / SVCCA / overlap 计算
+│   ├── contrast.py            # 成对 null / CI / 轨迹 / 混杂检查 + provenance
 │   └── viz.py                 # 双语对照的读出可视化页面
 ├── apps/
 │   ├── serve/                 # ★ 实时 J-Space 旁路（sidecar）
 │   │   ├── j7scope_serve/   #   OpenAI 兼容代理 + SSE 侧信道（纯标准库）
 │   │   ├── viewer/index.html  #   自包含的实时视图
 │   │   └── integrations/opencode/   # provider 配置 + 插件
+│   ├── site/contrast.html     # Contrast Lab（离线证据 + 可选 GPU 干预）
 │   └── web/                   # React/Vite J-Space Explorer（离线 artifact 浏览）
 ├── experiments/build_demo_run.py    # 生成前端开发用 demo artifact（非真实实验）
 ├── notebooks/walkthrough_zh_en.ipynb

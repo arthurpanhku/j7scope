@@ -109,9 +109,15 @@ trace at capture time; the viewer only displays it. Trace Schema v1 lives in
 | `/v1/chat/completions` | POST | OpenAI chat, streaming or not; drives generation |
 | `/v1/models` | GET | one model entry (harnesses probe this) |
 | `/jspace/stream` | GET | SSE: one J-space event per generated token |
+| `/jspace/interventions` | POST | one activation-patching probe (`hf` backend only) |
 | `/`, `/replay.html`, `/compare.html`, `/live.html`, `/assets/*` | GET | the static platform ([`../site`](../site)) |
 | `/traces/*` | GET | recorded Trace v1 files (when `--traces`/`--record` set) |
 | `/health` | GET | backend / model / layer / viewer count |
+
+`/health.capabilities.activation_patch` tells Contrast Lab whether the connected
+sidecar can run a causal A/B probe. The intervention endpoint accepts
+`source_prompt`, `target_prompt`, `patch_layer`, optional source/target positions,
+and `topk`; it is deliberately unavailable on the synthetic mock backend.
 
 ### Side-channel event
 

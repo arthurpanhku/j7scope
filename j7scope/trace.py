@@ -276,4 +276,39 @@ def validate_trace_gallery(trace_root: PathLike) -> List[str]:
                     problems.append(
                         f"{trace_id}: align.position_map[{pair_index}] is invalid"
                     )
+            contrast = align.get("contrast")
+            if contrast is not None:
+                from .contrast import (
+                    CONTRAST_SCHEMA_VERSION,
+                    PAIR_SHAREDNESS_DEFINITION,
+                )
+
+                if contrast.get("schema_version") != CONTRAST_SCHEMA_VERSION:
+                    problems.append(
+                        f"{trace_id}: contrast schema_version must be "
+                        f"{CONTRAST_SCHEMA_VERSION}"
+                    )
+                calibration = contrast.get("calibration", {})
+                for key in ("observed", "null", "same_lang_ceiling", "sharedness"):
+                    if key not in calibration:
+                        problems.append(
+                            f"{trace_id}: contrast.calibration missing {key}"
+                        )
+                if calibration.get("sharedness", {}).get("definition") != PAIR_SHAREDNESS_DEFINITION:
+                    problems.append(
+                        f"{trace_id}: contrast sharedness definition drifted"
+                    )
+                if contrast.get("position_map") != align.get("position_map"):
+                    problems.append(
+                        f"{trace_id}: contrast.position_map differs from align"
+                    )
+                if not isinstance(contrast.get("concept_trajectories"), list):
+                    problems.append(
+                        f"{trace_id}: contrast.concept_trajectories must be a list"
+                    )
+                provenance = contrast.get("provenance", {})
+                if not all(key in provenance for key in ("trace_a", "trace_b", "analysis")):
+                    problems.append(
+                        f"{trace_id}: contrast provenance is incomplete"
+                    )
     return problems

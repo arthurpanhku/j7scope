@@ -201,9 +201,15 @@ def _combined_concepts(tok: dict, lexicon: Dict[str, str]) -> List[str]:
     The cross-trace metric asks whether two sessions reach the same concept, so
     it pools zh and en read-out tokens into one concept set per token.
     """
-    toks = ([t["token"] for t in tok["readout"].get("zh", [])]
-            + [t["token"] for t in tok["readout"].get("en", [])])
-    return concepts_of(toks, lexicon)
+    out: List[str] = []
+    seen = set()
+    for bucket in ("zh", "en", "other"):
+        for row in tok["readout"].get(bucket, []):
+            concept = row.get("concept") or lexicon.get(row.get("token"))
+            if concept is not None and concept not in seen:
+                seen.add(concept)
+                out.append(concept)
+    return out
 
 
 def compute_pair_rigor(

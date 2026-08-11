@@ -11,6 +11,7 @@
     <h1><a href="./">J7Scope</a> <span class="sub">Compare · 双生对齐</span></h1>
     <nav>
       <a href="./">← Gallery</a>
+      <a id="labLink" href="contrast.html">Contrast Lab</a>
       <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
     </nav>
   </header>
@@ -51,6 +52,7 @@
   var J = window.JSpace, $ = function (id) { return document.getElementById(id); };
   var params = new URLSearchParams(location.search), group = params.get("group");
   if (!group) { location.href = "./"; return; }
+  $("labLink").href = "contrast.html?group=" + encodeURIComponent(group);
 
   var A = null, B = null, MAP = null, PR = null, pos = 0, playing = false, timer = null;
 

@@ -24,6 +24,22 @@ def test_demo_builder_produces_valid_gallery(tmp_path):
     )
 
     assert validate_trace_gallery(tmp_path) == []
+    align = json.loads(
+        (tmp_path / "demo-parallel-en" / "align.json").read_text(encoding="utf-8")
+    )
+    assert align["contrast"]["calibration"]["null"]["n"] == 1000
+    assert align["contrast"]["concept_trajectories"]
+    assert align["contrast"]["answer_identity_check"]["status"] == "not_assessable"
+
+
+def test_contrast_lab_page_keeps_research_statistics_precomputed():
+    page = (ROOT / "apps" / "site" / "contrast.html").read_text(encoding="utf-8")
+
+    assert "Contrast Lab" in page
+    assert "C.calibration" in page
+    assert "jspace/interventions" in page
+    assert "j7scope.claim_card" in page
+    assert "cross_lang_overlap -" not in page
 
 
 def test_gallery_validator_detects_index_drift(tmp_path):

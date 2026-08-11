@@ -128,6 +128,11 @@ class _Handler(BaseHTTPRequestHandler):
                 "layer": self.backend.layer,
                 "is_demo": getattr(self.backend, "is_demo", False),
                 "viewers": self.bus.subscriber_count(),
+                "capabilities": {
+                    "activation_patch": bool(
+                        getattr(self.backend, "supports_intervention", False)
+                    ),
+                },
             })
         if path == "/v1/models":
             return self._json({
@@ -150,6 +155,8 @@ class _Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if path == "/v1/chat/completions":
             return self._chat_completions()
+        if path == "/jspace/interventions":
+            return self._run_intervention()
         return self._json({"error": "not found"}, status=404)
 
     # ---- handlers ---------------------------------------------------------
@@ -287,6 +294,55 @@ class _Handler(BaseHTTPRequestHandler):
                           "total_tokens": seq},
             })
 
+    def _run_intervention(self) -> None:
+        if not getattr(self.backend, "supports_intervention", False):
+            return self._json({
+                "error": "activation patching requires the hf backend on a GPU sidecar",
+                "capability": "activation_patch",
+            }, status=409)
+        body = self._read_body()
+        source_prompt = body.get("source_prompt")
+        target_prompt = body.get("target_prompt")
+        if not isinstance(source_prompt, str) or not source_prompt.strip():
+            return self._json({"error": "source_prompt is required"}, status=400)
+        if not isinstance(target_prompt, str) or not target_prompt.strip():
+            return self._json({"error": "target_prompt is required"}, status=400)
+        if len(source_prompt) > 20_000 or len(target_prompt) > 20_000:
+            return self._json({"error": "prompt exceeds 20,000 characters"}, status=400)
+        try:
+            patch_layer = int(body.get("patch_layer"))
+            source_position = int(body.get("source_position", -1))
+            target_position = int(body.get("target_position", -1))
+            topk = min(100, max(1, int(body.get("topk", 20))))
+        except (TypeError, ValueError):
+            return self._json({"error": "intervention positions and layers must be integers"}, status=400)
+        if patch_layer < 0 or patch_layer >= self.backend.layer:
+            return self._json({
+                "error": f"patch_layer must be between 0 and {self.backend.layer - 1}"
+            }, status=400)
+        try:
+            result = self.backend.intervene(
+                source_prompt=source_prompt,
+                target_prompt=target_prompt,
+                patch_layer=patch_layer,
+                source_position=source_position,
+                target_position=target_position,
+                topk=topk,
+            )
+        except (ValueError, IndexError) as exc:
+            return self._json({"error": str(exc)}, status=400)
+        except Exception as exc:
+            print(f"  [intervention] failed: {exc!r}")
+            return self._json({
+                "error": "activation patching failed; inspect the sidecar log"
+            }, status=500)
+        raw_readout = result.pop("readout")
+        result["readout"] = protocol.bucket_readout(
+            raw_readout,
+            per_lang=self.server.per_lang,  # type: ignore[attr-defined]
+        )
+        result["is_demo"] = False
+        return self._json(result)
 
     def _maybe_record(self, buffered, messages) -> None:
         record_dir = self.server.record_dir  # type: ignore[attr-defined]

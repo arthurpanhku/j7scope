@@ -37,6 +37,7 @@ class Backend:
     layer: int
     is_demo: bool = False
     jacobian_estimator: str = "not_applicable"
+    supports_intervention: bool = False
 
     def generate(self, messages: Sequence[dict], **params) -> Iterator[Step]:
         raise NotImplementedError
@@ -152,6 +153,8 @@ class HFBackend(Backend):
     Not exercised on CPU-only / no-torch machines; intended for a GPU box with
     the model weights available. Structured to mirror MockBackend's Step stream.
     """
+
+    supports_intervention = True
 
     def __init__(self, model_name: str = "Qwen/Qwen2.5-7B-Instruct", layer: int = 18,
                  topk: int = 24, max_new_tokens: int = 256, device: str = None,
@@ -390,6 +393,43 @@ class HFBackend(Backend):
                 yield Step(text=text, token=text, topk=topk)
 
                 cur = next_id.view(1, 1)
+
+    def intervene(
+        self,
+        *,
+        source_prompt: str,
+        target_prompt: str,
+        patch_layer: int,
+        source_position: int = -1,
+        target_position: int = -1,
+        topk: int = 20,
+    ) -> dict:
+        """Run one activation-patching A/B probe on the loaded GPU model."""
+        if self._model is None:
+            self.load()
+        from j7scope.patching import patch_and_readout
+
+        result = patch_and_readout(
+            self._jlens,
+            source_prompt,
+            target_prompt,
+            patch_layer=patch_layer,
+            src_pos=source_position,
+            tgt_pos=target_position,
+            k=topk,
+        )
+        return {
+            "kind": "activation_patch",
+            "model": self.model_name,
+            "model_revision": self.model_revision_resolved,
+            "lens_layer": self.layer,
+            "patch_layer": patch_layer,
+            "source_position": source_position,
+            "target_position": target_position,
+            "jacobian_sha1": self.jacobian_sha1,
+            "readout": result["readout"],
+            "next_token": result["next_token"],
+        }
 
 
 def make_backend(kind: str, **kw) -> Backend:
