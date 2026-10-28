@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0rc2 — 2026-10-28 · Research Preview
+
+- Update the README with direct, version-pinned wheel installation, an English
+  quick start, upgrade instructions, checksum verification, and release links.
+- Align package metadata, CLI version output, and deployment examples with rc2.
+- Rebuild the distributions and repeat installed-wheel and real-model validation.
+
+Service and model behavior are unchanged from rc1. Research-preview limitations
+remain in effect; this release does not establish semantic lens quality or GPU
+performance.
+
 ## 0.2.0rc1 — 2026-10-28 · Research Preview
 
 J7Scope is now a self-hosted LLM representation observatory and reproducible J-lens

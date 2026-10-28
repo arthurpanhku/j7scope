@@ -7,4 +7,4 @@ Heavy (torch/transformers) modules are imported lazily — import
 `j7scope.metrics` and `j7scope.data` are numpy/stdlib-only.
 """
 
-__version__ = "0.2.0rc1"
+__version__ = "0.2.0rc2"
