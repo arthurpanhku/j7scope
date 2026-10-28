@@ -5,6 +5,7 @@ Date: 2026-10-28. Release: 0.2.0rc1.
 - Direct local Python suite: 58 passing tests, including session event/recording
   isolation, auth/cookies/origins, queue rejection/recovery, generation/intervention
   serialization, malformed/oversized requests, streaming failure cleanup, and plugins.
+- Clean release archive (excluding pre-existing draft modules): 54 passing tests.
 - Trace gallery validation: passed.
 - Pretrained model: 13 checks passed with SmolLM2-135M CPU float32 at the pinned
   revision. See [the machine-readable report](smollm2-135m-cpu.json). Includes actual
@@ -18,8 +19,9 @@ Date: 2026-10-28. Release: 0.2.0rc1.
   produces a size warning.
 - Browser: cookie login and authenticated live SSE updates were manually checked
   against a temporary local demo service; demo output remained labelled synthetic.
-- Docker engine and CUDA were unavailable locally. A dedicated preview CI workflow
-  builds/runs the demo container and repeats the model/package checks. GPU container
+- Docker engine and CUDA were unavailable locally. GitHub CI built and ran the demo
+  container successfully, including an authenticated generation. The preview workflow
+  also repeats the model/package checks. GPU container
   performance and Qwen research-quality read-outs are not certified by these checks.
 
 The local Dvalin 0.19.0 scan did **not** return a VERIFIED verdict. Its two high
