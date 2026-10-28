@@ -8,6 +8,8 @@ this module; the J-Space Explorer reads those artifacts as its only contract.
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Iterable, Mapping, Sequence, Union
 
@@ -29,10 +31,16 @@ def write_json(path: PathLike, data: Union[Mapping, Sequence], *, indent: int = 
     """Write UTF-8 JSON with deterministic formatting."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(data, ensure_ascii=False, indent=indent, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
+                                         prefix=f".{path.name}.", delete=False) as stream:
+            temporary = stream.name
+            stream.write(json.dumps(data, ensure_ascii=False, indent=indent, sort_keys=True) + "\n")
+        os.replace(temporary, path)
+    finally:
+        if temporary and os.path.exists(temporary):
+            os.unlink(temporary)
     return path
 
 

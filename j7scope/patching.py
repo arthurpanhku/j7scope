@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import torch
 
-from j7scope.fitting import JLens, _decoder_layers, capture_residual
+from j7scope.fitting import JLens, _decoder_layers, _hidden_states, capture_residual
 
 
 def patch_and_readout(jlens: JLens, src_prompt: str, tgt_prompt: str,
@@ -27,7 +27,7 @@ def patch_and_readout(jlens: JLens, src_prompt: str, tgt_prompt: str,
          "next_token": top-k of the patched run's actual final-position
                        next-token distribution (sanity channel)}
     """
-    if patch_layer >= jlens.layer:
+    if not 0 <= patch_layer < jlens.layer:
         raise ValueError("patch_layer must be below jlens.layer")
     model, tokenizer = jlens.model, jlens.tokenizer
 
@@ -36,12 +36,12 @@ def patch_and_readout(jlens: JLens, src_prompt: str, tgt_prompt: str,
     captured = {}
 
     def write_hook(module, args, output):
-        h = output[0].clone()
+        h = _hidden_states(output).clone()
         h[:, tgt_pos, :] = src_vec.to(h.dtype)
-        return (h,) + tuple(output[1:])
+        return (h,) + tuple(output[1:]) if isinstance(output, tuple) else h
 
     def read_hook(module, args, output):
-        captured["h"] = output[0]
+        captured["h"] = _hidden_states(output)
         return output
 
     layers = _decoder_layers(model)

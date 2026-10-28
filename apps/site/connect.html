@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>J7Scope · Connect</title><link rel="stylesheet" href="assets/jspace.css"></head>
+<body><header><h1><a href="./">J7Scope</a> <span class="sub">Connect · 连接服务</span></h1>
+<nav><a href="live.html">Live</a><a href="./">Gallery</a></nav></header>
+<main style="max-width:640px;margin:4rem auto">
+<h2>Connect to your research session</h2>
+<p>Enter the session key supplied by your operator, or the operator key for your own workspace. The browser receives an HttpOnly session cookie. Keys are never added to URLs or browser storage.</p>
+<form id="login"><label for="key">Session / operator key</label><br>
+<input id="key" type="password" autocomplete="off" required style="width:100%;padding:12px;margin:12px 0">
+<button type="submit">Connect</button> <button type="button" id="logout">Disconnect</button></form>
+<p id="status" role="status"></p>
+<p><a href="live.html">Open live view →</a> · <a href="./">Open session gallery →</a></p>
+<p>Each session has its own events and recordings. After a server restart or session expiry, ask the operator for a new session key.</p>
+</main><script>
+const status = document.getElementById('status');
+document.getElementById('login').addEventListener('submit', async event => {
+  event.preventDefault(); const key = document.getElementById('key');
+  try { const response = await fetch('auth/login', {method:'POST', headers:{Authorization:'Bearer '+key.value}});
+    key.value = ''; const result = await response.json();
+    status.textContent = response.ok ? 'Connected to session '+result.session_id : result.error;
+  } catch (_) { status.textContent = 'Connection failed. Check the service URL.'; }
+});
+document.getElementById('logout').addEventListener('click', async () => {
+  await fetch('auth/logout', {method:'POST'}); status.textContent = 'Disconnected';
+});
+</script></body></html>

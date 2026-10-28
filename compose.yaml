@@ -1,0 +1,32 @@
+services:
+  demo:
+    build: .
+    ports: ["127.0.0.1:8799:8799"]
+    environment:
+      J7SCOPE_API_KEY: ${J7SCOPE_API_KEY:?Set a key with at least 32 ASCII characters}
+    volumes: ["research-data:/data"]
+    restart: unless-stopped
+    init: true
+  gpu:
+    profiles: [gpu]
+    build:
+      context: .
+      args:
+        EXTRAS: "[hf]"
+    ports: ["127.0.0.1:8800:8799"]
+    environment:
+      J7SCOPE_API_KEY: ${J7SCOPE_API_KEY:?Set a key with at least 32 ASCII characters}
+    volumes: ["gpu-data:/data"]
+    command: ["--backend", "hf", "--host", "0.0.0.0", "--model", "Qwen/Qwen2.5-7B-Instruct", "--layer", "18", "--jacobian-cache", "/data/lenses", "--record", "/data/traces", "--token-delay", "0"]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    init: true
+volumes:
+  research-data:
+  gpu-data:

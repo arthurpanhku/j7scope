@@ -1,0 +1,13 @@
+{
+  "backend": "hf",
+  "model": "HuggingFaceTB/SmolLM2-135M-Instruct",
+  "model_revision": "12fd25f77366fa6b3b4b768ec3050bf629380bac",
+  "layer": 1,
+  "device": "cpu",
+  "dtype": "float32",
+  "n_probes": 8,
+  "max_new_tokens": 32,
+  "token_delay": 0,
+  "record": "./traces",
+  "jacobian_cache": "./lenses"
+}

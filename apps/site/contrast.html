@@ -10,6 +10,7 @@
   <header>
     <h1><a href="./">J7Scope</a> <span class="sub">Contrast Lab · 成对证据显微镜</span></h1>
     <nav>
+      <a href="connect.html">Connect</a>
       <a id="classicCompare" href="compare.html">Classic Compare</a>
       <a href="method.html">Methodology</a>
       <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
@@ -233,7 +234,7 @@
     button.onclick = function () { setMode(button.getAttribute("data-mode")); };
   });
   $("exportClaim").onclick = exportClaim;
-  fetch("health").then(function (response) { return response.ok ? response.json() : null; }).then(function (health) {
+  fetch("ready").then(function (response) { return response.ok ? response.json() : null; }).then(function (health) {
     gpuReady = !!(health && health.capabilities && health.capabilities.activation_patch);
     $("gpuBadge").textContent = gpuReady ? "GPU sidecar · 干预可用" : "GPU sidecar · 未连接";
     $("gpuBadge").classList.toggle("on", gpuReady);

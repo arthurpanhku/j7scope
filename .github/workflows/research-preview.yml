@@ -1,0 +1,71 @@
+name: Research preview packages
+
+on:
+  push:
+    tags: ['v*rc*']
+  pull_request:
+    paths:
+      - 'pyproject.toml'
+      - 'setup.py'
+      - 'MANIFEST.in'
+      - 'apps/serve/**'
+      - 'j7scope/**'
+      - 'tests/test_service.py'
+      - 'tests/test_extensions.py'
+      - '.github/workflows/research-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install CPU research dependencies
+        run: |
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install -e '.[hf]' pytest build twine
+      - name: Validate code, trace gallery, and real pretrained model
+        run: |
+          pytest -q
+          python experiments/validate_trace_gallery.py
+          j7scope-validate --output validation-real-model.json
+      - name: Build distributions and validate metadata
+        run: |
+          python -m build
+          python -m twine check dist/*
+      - name: Verify installed wheel without torch or source checkout
+        run: |
+          python -m venv /tmp/j7scope-wheel
+          /tmp/j7scope-wheel/bin/pip install dist/*.whl
+          cd /tmp
+          /tmp/j7scope-wheel/bin/python "$GITHUB_WORKSPACE/scripts/smoke_installed.py" --require-no-torch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: research-preview
+          path: |
+            dist/*
+            validation-real-model.json
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and start demo container
+        run: |
+          docker build -t j7scope-preview .
+          docker run -d --name j7scope-preview -p 127.0.0.1:8799:8799 -e J7SCOPE_API_KEY=ci-preview-key-000000000000000000000000 j7scope-preview
+          for attempt in $(seq 1 30); do
+            if curl --fail http://127.0.0.1:8799/health; then break; fi
+            sleep 1
+          done
+          curl --fail http://127.0.0.1:8799/live.html
+          curl --fail http://127.0.0.1:8799/v1/chat/completions -H 'Authorization: Bearer ci-preview-key-000000000000000000000000' -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"hello"}],"max_tokens":4}'
+      - name: Container logs
+        if: always()
+        run: docker logs j7scope-preview
