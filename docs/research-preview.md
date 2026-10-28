@@ -1,4 +1,4 @@
-# J7Scope 0.2.0rc1 · Research Preview
+# J7Scope 0.2.0rc2 · Research Preview
 
 J7Scope is a self-hosted observatory for LLM internal representations and reproducible
 J-lens experiments. It combines live read-outs, activation patching, trace recording,
@@ -14,12 +14,12 @@ through a backend plugin; no commercial-provider backend ships in this release.
 
 ## Install and start
 
-Python 3.10+ is required. Download the wheel from the GitHub prerelease, then:
+Python 3.10+ is required. Install the version-pinned GitHub release wheel directly:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install ./j7scope-0.2.0rc1-py3-none-any.whl
+python -m pip install "https://github.com/arthurpanhku/j7scope/releases/download/v0.2.0rc2/j7scope-0.2.0rc2-py3-none-any.whl"
 j7scope --backend mock --record ./traces
 ```
 
@@ -35,10 +35,10 @@ The mock is synthetic and labelled DEMO. The installed base package needs no
 PyTorch; recording and metrics use NumPy. The source-only mock can still run with
 stdlib alone if recording is disabled.
 
-For real weights, install the HF extra from the downloaded wheel:
+For real weights, install the HF extra from the same release:
 
 ```bash
-pip install './j7scope-0.2.0rc1-py3-none-any.whl[hf]'
+python -m pip install "j7scope[hf] @ https://github.com/arthurpanhku/j7scope/releases/download/v0.2.0rc2/j7scope-0.2.0rc2-py3-none-any.whl"
 j7scope --backend hf --model HuggingFaceTB/SmolLM2-135M-Instruct \
   --model-revision 12fd25f77366fa6b3b4b768ec3050bf629380bac \
   --layer 1 --device cpu --dtype float32 --n-probes 8 \

@@ -1,36 +1,35 @@
 # Research-preview validation record
 
-Date: 2026-10-28. Release: 0.2.0rc1.
+Date: 2026-10-28. Release: 0.2.0rc2.
 
-- Direct local Python suite: 58 passing tests, including session event/recording
-  isolation, auth/cookies/origins, queue rejection/recovery, generation/intervention
-  serialization, malformed/oversized requests, streaming failure cleanup, and plugins.
-- Clean release archive (excluding pre-existing draft modules): 54 passing tests.
+This release refreshes the README, installation examples, and distribution version.
+Service and model behavior are unchanged from rc1. It remains a research preview.
+
+- Clean release archive: 54 passing Python tests, including session isolation,
+  authentication, cookies/origins, admission limits, failure cleanup, and plugins.
 - Trace gallery validation: passed.
-- Pretrained model: 13 checks passed with SmolLM2-135M CPU float32 at the pinned
-  revision. See [the machine-readable report](smollm2-135m-cpu.json). Includes actual
-  authenticated JSON/SSE HTTP generation and recorded-gallery access, independent
-  activation capture, and identity-patch invariance.
-- Wheel and source metadata: `twine check` passed. A clean virtual environment with
-  no torch installed started the CLI outside the repository, served bundled assets,
-  recorded a generation, and replayed its trace index.
-- React/TypeScript application: production build passed after dependency updates;
-  npm audit reported zero vulnerabilities. The existing large Plotly bundle still
-  produces a size warning.
-- Browser: cookie login and authenticated live SSE updates were manually checked
-  against a temporary local demo service; demo output remained labelled synthetic.
-- Docker engine and CUDA were unavailable locally. GitHub CI built and ran the demo
-  container successfully, including an authenticated generation. The preview workflow
-  also repeats the model/package checks. GPU container
-  performance and Qwen research-quality read-outs are not certified by these checks.
+- Pretrained model: 13 checks passed with pinned SmolLM2-135M CPU float32. See
+  [the fresh machine-readable report](smollm2-135m-cpu.json). Checks include independent
+  activation capture, identity patching, authenticated JSON/SSE generation, and
+  recorded-gallery access.
+- Distribution metadata: wheel and source archive pass `twine check`. The installed
+  wheel starts outside the repository without PyTorch, serves bundled assets, and
+  records/replays a generation. Package and CLI versions both report `0.2.0rc2`.
+- README relative links and the pinned HF-extra requirement syntax were checked.
+  Published release files carry SHA-256 checksums. Direct GitHub installation is
+  documented; no PyPI publication is implied.
+- CI repeats Python tests, trace checks, real-model validation, package installation,
+  demo-container startup/generation, and the existing web build/dependency audit.
 
-The local Dvalin 0.19.0 scan did **not** return a VERIFIED verdict. Its two high
-findings identify `torch.nn.Module.eval()` as dynamic code execution; manual review
-confirms these are PyTorch inference-mode methods, not calls to Python's `eval`.
-Its wrapped test command also returned failure, while the complete direct test
-command passed. The original evidence is preserved under `.dvalin/artifacts/` in
-the developer checkout. No rule suppression or security-certification claim was
-introduced. Static-analysis results are supplementary to the explicit checks above.
+CUDA and a local Docker daemon were unavailable. The demo container is checked in
+GitHub CI; GPU performance, the GPU container profile, lens convergence, semantic
+quality, and cross-language representation sharing are not established by these
+checks. Text-only commercial APIs without activations cannot provide these read-outs.
 
-This is implementation validation for a research preview, not evidence of lens
-convergence, semantic accuracy, or cross-language shared representations.
+The rc1 local Dvalin 0.19.0 run did not return VERIFIED: it flagged two PyTorch
+`torch.nn.Module.eval()` calls as dynamic code execution, and its wrapped test
+command failed while the direct suite passed. Those calls were manually reviewed
+as inference-mode methods, not Python `eval`. This documentation/version release
+does not claim a new Dvalin verdict or independent security certification. The
+[rc1 validation record](https://github.com/arthurpanhku/j7scope/blob/v0.2.0rc1/docs/validation/preview-verification.md)
+retains the original assessment.

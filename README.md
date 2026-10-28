@@ -6,7 +6,7 @@
 
 **Self-hosted observatory for LLM internal representations and reproducible J-lens experiments.**
 
-[Research Preview v0.2.0rc1](https://github.com/arthurpanhku/j7scope/releases/tag/v0.2.0rc1) · [安装与部署](docs/research-preview.md) · [扩展接口](docs/extending.md) · [静态演示](https://arthurpanhku.me/j7scope/) · Apache-2.0
+[Research Preview v0.2.0rc2](https://github.com/arthurpanhku/j7scope/releases/tag/v0.2.0rc2) · [安装与部署](docs/research-preview.md) · [扩展接口](docs/extending.md) · [静态演示](https://arthurpanhku.me/j7scope/) · Apache-2.0
 
 ## 1. 工具定位与当前范围
 
@@ -25,12 +25,12 @@ J7Scope 把模型内部读出、实验干预和可分享的 trace 连接起来�
 
 ## 2. 安装与启动
 
-从 [GitHub 预发布页面](https://github.com/arthurpanhku/j7scope/releases/tag/v0.2.0rc1)下载 wheel：
+需要 **Python 3.10+**。直接安装本次发布的 wheel（不需要克隆仓库）：
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install ./j7scope-0.2.0rc1-py3-none-any.whl
+python -m pip install "https://github.com/arthurpanhku/j7scope/releases/download/v0.2.0rc2/j7scope-0.2.0rc2-py3-none-any.whl"
 j7scope --backend mock --record ./traces
 ```
 
@@ -45,7 +45,7 @@ curl -N http://127.0.0.1:8799/v1/chat/completions \
 Mock 明确标注 `DEMO`，使用合成数据。安装包携带网页和默认词表，可从任意工作目录启动。真实模型需要 HF extra：
 
 ```bash
-pip install './j7scope-0.2.0rc1-py3-none-any.whl[hf]'
+python -m pip install "j7scope[hf] @ https://github.com/arthurpanhku/j7scope/releases/download/v0.2.0rc2/j7scope-0.2.0rc2-py3-none-any.whl"
 j7scope-validate --output validation-real-model.json
 j7scope --backend hf --model HuggingFaceTB/SmolLM2-135M-Instruct \
   --model-revision 12fd25f77366fa6b3b4b768ec3050bf629380bac \
@@ -64,6 +64,29 @@ j7scope --backend hf --model HuggingFaceTB/SmolLM2-135M-Instruct \
 ```
 
 跨语言列只是同一次读出按字符集拆分的展示；共享表示仍需配对任务、打乱基线、同语言对照和因果实验验证。预览版所有新录制 trace 保留 `preview:true`。正式研究应加载经过复核的 Jacobian 及其元数据，不能把临时少量探针的结果当作研究结论。
+
+### 下载、校验与升级
+
+[发布页面](https://github.com/arthurpanhku/j7scope/releases/tag/v0.2.0rc2)提供 wheel、源码包、真实模型验证报告和 `SHA256SUMS`。下载该校验清单与其中列出的所有文件到同一目录后，可用 `shasum -a 256 -c SHA256SUMS`（Linux 可用 `sha256sum -c SHA256SUMS`）校验完整性。本项目当前通过 GitHub Releases 分发，尚未发布到 PyPI。
+
+从旧版升级时，使用上面的安装命令并加 `--upgrade`，然后运行 `j7scope --version`。若已安装旧版 HF 依赖，使用带 `[hf]` 的命令升级。
+
+本次 `rc2` 更新安装说明与版本一致性，服务功能沿用 `rc1`。详见 [CHANGELOG](CHANGELOG.md)、[真实模型验证](docs/validation/smollm2-135m-cpu.json)及[验证范围与限制](docs/validation/preview-verification.md)。
+
+### English quick start
+
+Use Python 3.10+ in a virtual environment; the base installation does not require PyTorch:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install "https://github.com/arthurpanhku/j7scope/releases/download/v0.2.0rc2/j7scope-0.2.0rc2-py3-none-any.whl"
+j7scope --backend mock --record ./traces
+```
+
+Open `http://127.0.0.1:8799/live.html`, then send the text-chat request shown above. Mock output is synthetic and labelled DEMO. Install the `[hf]` extra using the command above to run actual weights, then use `j7scope-validate` for a pinned SmolLM2 CPU pipeline check. For a cloud GPU, run the model and J7Scope together and connect via SSH forwarding or HTTPS; use separate session keys for researchers.
+
+Read the [deployment guide](docs/research-preview.md) and [extension contracts](docs/extending.md). The preview supports text chat and internal-state experiments; tool execution, ordinary commercial APIs without activations, GPU performance and semantic lens quality are outside its validated scope.
 
 ## 3. 前端展示 · J-Space Gallery
 

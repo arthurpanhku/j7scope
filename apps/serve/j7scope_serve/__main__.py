@@ -65,7 +65,7 @@ def main() -> None:
     p.add_argument("--traces", default=None, metavar="DIR",
                    help="serve traces from DIR at /traces (default: the --record dir)")
     p.add_argument("--config", help="JSON defaults; command-line flags override them")
-    p.add_argument("--version", action="version", version="%(prog)s 0.2.0rc1")
+    p.add_argument("--version", action="version", version="%(prog)s 0.2.0rc2")
     p.add_argument("--list-backends", action="store_true")
     p.add_argument("--n-probes", type=int, default=16, help="preview Jacobian probes per prompt")
     p.add_argument("--corpus", help="JSON array of strings for preview lens fitting")
