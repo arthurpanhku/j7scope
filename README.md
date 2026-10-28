@@ -1,107 +1,69 @@
-<p align="center">
-  <img src="assets/logo.svg" width="168" alt="J7Scope logo" />
-</p>
+<p align="center"><img src="assets/logo.svg" width="140" alt="J7Scope" /></p>
 
-<h1 align="center">J7Scope</h1>
+# J7Scope
 
-<p align="center">
-  <b>看见开源模型的"思维空间" —— 一个研究项目，也是一个实时 J-Space 旁路。</b><br>
-  当 agent harness（opencode / codex / …）驱动一个开源模型时，旁路显示这个模型的 J-space 读出。
-</p>
+**可自行部署的 LLM 内部表示观测与实验工具。** 研究员可以在本地或云 GPU 上运行模型，实时查看 J-lens 读出、执行 activation patching，并把会话录制成可回放、可比较、带来源信息的实验产物。
 
-<p align="center">
-  <i>See an open model's "mind-space". A research project, and a live J-Space sidecar:
-  when an agent harness drives an open-weights model, J7Scope shows that model's J-space read-out in real time.</i>
-</p>
+**Self-hosted observatory for LLM internal representations and reproducible J-lens experiments.**
 
-<p align="center">
-  <a href="https://arthurpanhku.me/j7scope/"><img src="https://img.shields.io/badge/▶_demo-live-brightgreen" alt="live demo" /></a>
-  <img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="license" />
-  <img src="https://img.shields.io/badge/status-early%20scaffold-orange" alt="status" />
-  <img src="https://img.shields.io/badge/model-Qwen2.5--7B--Instruct-green" alt="model" />
-  <img src="https://img.shields.io/badge/sidecar-stdlib%20%C2%B7%20zero%20deps-brightgreen" alt="sidecar" />
-</p>
+[Research Preview v0.2.0rc1](https://github.com/arthurpanhku/j7scope/releases/tag/v0.2.0rc1) · [安装与部署](docs/research-preview.md) · [扩展接口](docs/extending.md) · [静态演示](https://arthurpanhku.me/j7scope/) · Apache-2.0
 
----
+## 1. 工具定位与当前范围
 
-**J7Scope = 一台探入 J-space 的"示波器"。** 当 agent harness 驱动一个开源模型时，把探针伸进模型内部，实时读出它的全局工作空间（J-space）。
+J7Scope 把模型内部读出、实验干预和可分享的 trace 连接起来。双语 J-space 研究是首个应用；研究员也可以替换模型、概念词表和拟合语料，构建自己的实验。
 
-项目前身叫 _TvinnHugr_（古北欧语 **_tvinnr_** 双生的、合股的线 + **_hugr_** 心智）—— 这个"双生"意象仍是核心研究问题：模型的"全局工作空间"在中英双语下运行时，是同一个 _hugr_，还是各自独立的一对 _tvinnir hugir_？logo 的双股缠绕正取此意。
-
-## 这个仓库有两个面
-
-1. **一项研究** —— 独立复现并扩展 Anthropic 的全局工作空间（J-space）研究，检验模型内部的"思维空间"在中英双语下是否共享同一套概念表示。这是一个大部分可解释性研究者做不了的双语视角实验。（见 [§4 研究背景](#4-研究背景) 起）
-2. **一个实时旁路（sidecar）** —— 把 J-space 读出做成一个 OpenAI 兼容代理，插在 agent harness 和开源模型之间：harness 照常写代码，旁边实时显示这个模型"倾向于说但还没说"的概念，中文一列、英文一列。（见 [§2](#2-实时-j-space-旁路)）
-
-研究是内核，旁路是它的可见化应用。**旁路不需要研究结论成立就能跑** —— 它本身就是一个"看模型在想什么"的工具。
-
-## 2. 实时 J-Space 旁路
-
-```
-┌──────────────┐   OpenAI /v1/chat/completions    ┌────────────────────────┐
-│  opencode /  │ ───────────────────────────────▶ │  j7scope-serve        │
-│  codex /     │ ◀──────── token 流 ───────────── │  (代理 + J-lens 钩子)    │
-│  任意 OpenAI │                                   │                         │
-│  客户端      │                                   │  每个 token：读出       │
-└──────────────┘                                   │  h_l ─J_l─▶ 概念        │
-       ▲                                            └───────────┬────────────┘
-       │ 照常写代码                                             │ SSE 侧信道
-┌──────┴───────┐        GET /jspace/stream                      │ {token, zh[], en[]}
-│ J-Space 视图 │ ◀──────────────────────────────────────────────┘
-│  （浏览器）  │
-└──────────────┘
-```
-
-### 为什么只支持开源模型
-
-J-space 读出的输入是模型的**残差流激活** `h_l`，只有在你自己托管模型权重时才拿得到。
-
-| 场景 | 能否显示 J-space |
+| 使用方式 | 支持范围 |
 |---|---|
-| harness 接 Anthropic / OpenAI 等闭源 API | ❌ API 不暴露激活，物理上不可能 |
-| harness 接**本地开源模型**（Qwen / Yi / InternLM …） | ✅ 这正是本工具的用武之地 |
+| 本地模型 | HF 后端直接加载权重、捕获激活和拟合／加载 lens |
+| 云端自托管模型 | 模型和 J7Scope 在同一计算节点运行，本地浏览器经 SSH／HTTPS 连接 |
+| 普通商用聊天 API | 不提供内部激活时不能做真实 J-Space 读出；本版不附带此类后端 |
+| 离线分享 | 浏览器回放 Trace v1，无需模型或 GPU |
 
-所以定位不是"给 Claude Code 显示 Claude 的 J-space"，而是：**当这些 harness 接开源模型时，旁路显示这个模型的 J-space。** 闭源模型下 harness 照常工作，只是没有 J-space 可显示。
+**研究预览版，不是完成的研究结论。** 已用 SmolLM2-135M 预训练权重在 CPU 上验证生成、独立激活捕获、读出一致性、恒等干预和 trace 导出，见[验证记录](docs/validation/smollm2-135m-cpu.json)。少量随机探针只验证计算链路，不保证读出的语义质量或跨语言共享。Qwen GPU 性能与 Docker GPU 运行仍需部署机器验证。
 
-### 快速开始（无需 GPU）
+服务面向个人研究者和受信任实验室：会话凭证隔离事件和录制，模型任务有界串行排队。当前仅支持 OpenAI 风格的**文本聊天子集**；tool calling、完整 agent 执行和任意模型兼容性不在本版承诺中。
 
-`mock` 后端**零依赖**（纯标准库），用合成读出把整条链路先跑通：
+## 2. 安装与启动
+
+从 [GitHub 预发布页面](https://github.com/arthurpanhku/j7scope/releases/tag/v0.2.0rc1)下载 wheel：
 
 ```bash
-cd apps/serve
-python -m j7scope_serve --backend mock
-# 浏览器打开 http://127.0.0.1:8799/ ，另开一个终端：
+python -m venv .venv
+source .venv/bin/activate
+pip install ./j7scope-0.2.0rc1-py3-none-any.whl
+j7scope --backend mock --record ./traces
+```
+
+打开 `http://127.0.0.1:8799/live.html`；另一个终端发送请求：
+
+```bash
 curl -N http://127.0.0.1:8799/v1/chat/completions \
-  -H 'content-type: application/json' \
-  -d '{"stream":true,"messages":[{"role":"user","content":"hi"}]}'
+  -H 'Content-Type: application/json' \
+  -d '{"stream":true,"messages":[{"role":"user","content":"Hello"}],"max_tokens":32}'
 ```
 
-视图会随 token 逐个点亮，中英两列同时读出同一个概念。mock 后端产出的一切都明确标注 `DEMO`（合成数据，不代表任何真实模型）。
-
-### 真实读出（GPU）
-
-需要 `torch` + `transformers`（仓库根目录 `pip install -e .`）和足够显存。sidecar 复用 [`j7scope.fitting.JLens`](j7scope/fitting.py)：`J_l` 只在一小段通用语料上拟合一次（缓存到磁盘），之后每个生成 token 的残差流都通过它读出。
+Mock 明确标注 `DEMO`，使用合成数据。安装包携带网页和默认词表，可从任意工作目录启动。真实模型需要 HF extra：
 
 ```bash
-python -m j7scope_serve --backend hf \
-  --model Qwen/Qwen2.5-7B-Instruct --layer 18 \
-  --jacobian-cache ~/.cache/j7scope
+pip install './j7scope-0.2.0rc1-py3-none-any.whl[hf]'
+j7scope-validate --output validation-real-model.json
+j7scope --backend hf --model HuggingFaceTB/SmolLM2-135M-Instruct \
+  --model-revision 12fd25f77366fa6b3b4b768ec3050bf629380bac \
+  --layer 1 --device cpu --dtype float32 --n-probes 8 \
+  --jacobian-cache ./lenses --record ./traces --token-delay 0
 ```
 
-### 接入 harness
+开发安装：`pip install -e '.[hf]'`，然后 `j7scope --config examples/smollm-cpu.json`。
 
-- **opencode** —— provider 配置 + 可选插件，见 [`apps/serve/integrations/opencode/`](apps/serve/integrations/opencode/)。
-- **codex / 其它 OpenAI 兼容 harness** —— 把 provider 的 `base_url` 指向 `http://127.0.0.1:8799/v1`，用视图页显示即可。侧信道与 harness 无关，任何客户端都能用，只有便利插件是 opencode 专属的。
+远程部署使用 `J7SCOPE_API_KEY`，给每位研究员创建独立会话密钥；网页从 `connect.html` 登录。公开网络通过 HTTPS 反向代理访问，或使用 SSH 转发。完整配置、限制、Docker 与会话流程见[部署手册](docs/research-preview.md)。
 
-把 opencode 的 provider 指向 sidecar 后（左，**真实 opencode 会话**：`opencode.json` + `opencode run` + 插件日志 + 模型回复），右侧 J-Space 视图会随同一次生成逐 token 点亮。下图为 `DEMO` 后端（合成读出）；接开源模型时同一界面显示真实读出。
+```text
+文本客户端 ── /v1/chat/completions ──▶ J7Scope + 模型 + J-lens
+浏览器     ◀─ 会话专属 SSE 读出 ────┘
+                              └──▶ Trace v1 → 回放／比较／导出
+```
 
-<p align="center"><img src="docs/screenshots/opencode.png" width="900" alt="opencode driving the j7scope sidecar; the live J-Space view lights up token by token" /></p>
-
-侧信道每个 token 发一条事件（schema 见 [`protocol.py`](apps/serve/j7scope_serve/protocol.py)），`zh` / `en` 两列来自**同一个** J-lens 读出、按字符集拆分 —— 两列在同一个概念上同时点亮，就是这个 workspace 方向跨语言共享的实时证据。完整说明见 [`apps/serve/README.md`](apps/serve/README.md)。
-
-> **一句话定位：** 独立复现并扩展 Anthropic 的全局工作空间研究，检验模型内部的"思维空间"在中英双语下是否共享同一套概念表示；并把这套读出做成一个可以旁挂在任意开源模型 agent 上的实时工具。
-
-**当前状态：早期脚手架。** 研究侧 M1（相关性分析）正在 Qwen2.5-7B-Instruct 上搭建，尚未产出结论性数据；sidecar 的 mock 链路已跑通（含 opencode 实测），`hf` 后端已实现、待在 GPU 机器上验证。
+跨语言列只是同一次读出按字符集拆分的展示；共享表示仍需配对任务、打乱基线、同语言对照和因果实验验证。预览版所有新录制 trace 保留 `preview:true`。正式研究应加载经过复核的 Jacobian 及其元数据，不能把临时少量探针的结果当作研究结论。
 
 ## 3. 前端展示 · J-Space Gallery
 
@@ -141,9 +103,9 @@ Anthropic 2026 年 7 月的论文 [*Verbalizable Representations Form a Global W
 
 论文的语料全部是英文网页文本，J-lens 的拟合和验证都在单一语言内完成。这留下了一个论文没有回答的问题：
 
-> 如果 workspace 是模型真正的"概念层"表示，它应该是语言无关的 —— 同一个概念不管用中文还是英文触发，都应该落在 J-space 里相近的方向上。**这个假设从未被检验过。**
+> 如果 workspace 是模型真正的"概念层"表示，它应该是语言无关的 —— 同一个概念不管用中文还是英文触发，都应该落在 J-space 里相近的方向上。**需要在开源模型上系统测量其共享程度、失效边界与安全监控价值。** 原论文已含多语言测试，并展示英文 J-lens 坐标干预改变中文输出；本项目不以首次发现跨语言 J-space 为创新主张。
 
-官方配套代码 [`anthropics/jacobian-lens`](https://github.com/anthropics/jacobian-lens)（Apache-2.0）明确标注为"参考实现，不维护、不接受贡献"，公开的开源模型 demo 也只是单语言可视化工具。**这个跨语言方向目前是空的。**
+官方配套代码 [`anthropics/jacobian-lens`](https://github.com/anthropics/jacobian-lens)（Apache-2.0）明确标注为"参考实现，不维护、不接受贡献"，公开的开源模型 demo 也只是单语言可视化工具。本项目关注开源模型的系统双语评估与可复现的因果对照。
 
 ## 5. 研究问题与假设
 
@@ -170,7 +132,7 @@ Anthropic 2026 年 7 月的论文 [*Verbalizable Representations Form a Global W
 
 ### 6.3 分析方法（建议按顺序推进，先便宜后昂贵）
 
-- **M1 相关性分析（便宜，先做）。** 用同一个 J_l（模型的输入输出 Jacobian，与语言无关，只拟合一次）分别读出中文 prompt 和英文 prompt 在对应位置的 top-k token。用 **CKA 或 SVCCA** 衡量两组读出方向的表示相似度，配合 **top-k 重叠率**作为直观指标。
+- **M1 相关性分析（便宜，先做）。** 用同一个 J_l（在固定语料分布上估计的输入输出 Jacobian 期望；需另做中/英/混合拟合语料消融）分别读出中文 prompt 和英文 prompt 在对应位置的 top-k token。用 **CKA 或 SVCCA** 衡量两组读出方向的表示相似度，配合 **top-k 重叠率**作为直观指标。
 - **M2 因果验证（贵，M1 有信号后再做）。** Activation patching：把中文语境下"操纵"概念的残差流，patch 进英文语境的前向传播，看 J-lens 读出是否依然是"操纵"类概念。如果 patching 后读出**跟着"概念"走而不是跟着"patch 来源语言"走**，这是比相关性更强的因果证据。
 - **M3 分级验证（可选，时间富余再做）。** 对比抽象概念 vs 具体实体概念的跨语言重叠率差异，验证 H3。
 
@@ -214,7 +176,7 @@ j7scope/
 ## 8. 研究侧快速开始
 
 ```bash
-pip install -e .
+pip install -e '.[hf]'
 # 建议使用约 20 GB 显存的 GPU 以 bf16 加载 Qwen2.5-7B-Instruct
 jupyter lab notebooks/walkthrough_zh_en.ipynb
 ```
@@ -400,9 +362,15 @@ Apache-2.0（见 [LICENSE](LICENSE)）。fitting 逻辑基于 [`anthropics/jacob
 
 ## English summary
 
-**J7Scope** — an "oscilloscope" for a model's J-space (formerly *TvinnHugr*, Old Norse *tvinnr* "twined" + *hugr* "mind"; the twin motif still names the research question) — has two faces:
+J7Scope is a self-hosted LLM representation observatory and reproducible J-lens
+research toolkit. Run supported open weights locally or on your own cloud GPU,
+inspect live read-outs, perform activation patching, and export versioned traces
+for replay and comparison. Bilingual J-space evaluation is the first research
+application; model backends, structure adapters, corpora, and concept vocabularies
+can be extended independently.
 
-1. **A research project** asking whether the **J-space / global workspace** described in Anthropic's July 2026 paper [*Verbalizable Representations Form a Global Workspace in Language Models*](https://transformer-circuits.pub/2026/workspace/index.html) is **shared across Chinese and English**, or maintained separately per language. The paper fits and validates its **J-lens** entirely on English text; whether the "concept level" it reveals is language-independent has never been tested.
-2. **A live J-Space sidecar** (`apps/serve`): an OpenAI-compatible proxy you insert between an agent harness (opencode, codex, …) and a **local open-weights model**. The harness codes as usual; alongside it, the sidecar streams the model's live J-lens read-out — the concepts it is inclined to say next — in a 中文 column and an English column. This only works for open models: the read-out is computed from the residual stream, which closed API models never expose. Zero-dependency mock backend for wiring it up, real `hf` backend (reusing `JLens`) for a GPU box. See [`apps/serve/README.md`](apps/serve/README.md).
-
-Research hypotheses (mutually exclusive): **H1** language-independent (shared directions — supports the paper's core claim), **H2** language-specific (disjoint directions — a substantive counterexample), **H3** graded (abstract concepts shared, concrete entities language-bound — the most likely outcome). Method, cheap-to-expensive: **M1** correlational (one language-agnostic Jacobian `J_l`, then CKA / SVCCA / top-k overlap between zh and en readouts, always reported against a shuffled-pairing null), **M2** causal (cross-lingual activation patching — does the readout follow the *concept* or the *source language*?), **M3** the abstract-vs-concrete gradient. Primary model Qwen2.5-7B-Instruct; replication on Yi-1.5-9B / InternLM2.5-7B.
+The research preview includes an installable CLI/viewer, bounded serial model
+admission, scoped session credentials/events/recordings, and pretrained SmolLM2 CPU
+smoke validation. It supports text chat rather than complete agent tool execution.
+Ordinary chat APIs cannot substitute for internal activation access. See
+[installation, deployment, validation and limitations](docs/research-preview.md).

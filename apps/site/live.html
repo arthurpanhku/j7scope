@@ -10,6 +10,7 @@
   <header>
     <h1><a href="./">J7Scope</a> <span class="sub">Live · 实时读出</span></h1>
     <nav>
+      <a href="connect.html">Connect</a>
       <a href="./">← Gallery</a>
       <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
     </nav>
@@ -22,8 +23,8 @@
   </div>
 
   <p class="lede">
-    Streaming from the sidecar as it generates. Point an agent harness (opencode, codex)
-    at this sidecar and watch the model's J-space light up token by token. For rigor
+    Send text chat requests to this service and inspect J-lens vocabulary projections
+    as the hosted model generates. This preview supports text chat; agent tool execution is not included. For rigor
     (null bands, sharedness) and permanent artifacts, record a trace and use
     <a href="./">the gallery</a>.
   </p>
@@ -52,7 +53,7 @@
   var toks = [], MAX = 60;
   var es = new EventSource("jspace/stream");
   es.onopen = function () { $("b-conn").textContent = "● live"; $("b-conn").className = "badge on"; };
-  es.onerror = function () { $("b-conn").textContent = "reconnecting…"; $("b-conn").className = "badge"; };
+  es.onerror = function () { $("b-conn").textContent = "disconnected · use Connect if authentication is required"; $("b-conn").className = "badge"; };
   es.onmessage = function (e) {
     var ev; try { ev = JSON.parse(e.data); } catch (_) { return; }
     if (ev.type === "meta") {

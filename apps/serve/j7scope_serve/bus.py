@@ -17,15 +17,15 @@ from typing import Deque, Dict, List
 class ReadoutBus:
     def __init__(self, *, backlog: int = 64, queue_max: int = 1024):
         self._lock = threading.Lock()
-        self._subscribers: Dict[int, "queue.Queue[dict]"] = {}
+        self._subscribers = {}
         self._next_id = 0
         self._backlog: Deque[dict] = deque(maxlen=backlog)
         self._queue_max = queue_max
 
-    def publish(self, event: dict) -> None:
+    def publish(self, event: dict, *, session: str = "local") -> None:
         with self._lock:
-            self._backlog.append(event)
-            subs = list(self._subscribers.values())
+            self._backlog.append((session, event))
+            subs = [q for scope, q in self._subscribers.values() if scope == session]
         for q in subs:
             try:
                 q.put_nowait(event)
@@ -33,14 +33,16 @@ class ReadoutBus:
                 # A stuck/slow viewer must never stall generation; drop for it.
                 pass
 
-    def subscribe(self, *, replay: bool = True) -> "tuple[int, queue.Queue[dict]]":
+    def subscribe(self, *, replay: bool = True, session: str = "local") -> "tuple[int, queue.Queue[dict]]":
         q: "queue.Queue[dict]" = queue.Queue(maxsize=self._queue_max)
         with self._lock:
             sub_id = self._next_id
             self._next_id += 1
-            self._subscribers[sub_id] = q
+            self._subscribers[sub_id] = (session, q)
             if replay:
-                for event in list(self._backlog):
+                for scope, event in list(self._backlog):
+                    if scope != session:
+                        continue
                     try:
                         q.put_nowait(event)
                     except queue.Full:

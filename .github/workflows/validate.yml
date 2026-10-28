@@ -22,7 +22,7 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Install Python package and test runner
-        run: python -m pip install -e . pytest
+        run: python -m pip install -e '.[hf]' pytest
 
       - name: Validate committed trace gallery
         run: python experiments/validate_trace_gallery.py

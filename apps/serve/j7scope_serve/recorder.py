@@ -11,13 +11,17 @@ carries the full rigor layer baked in.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import uuid
+import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 from j7scope import rigor
-from j7scope.trace import write_trace
+from j7scope.trace import write_trace, rebuild_trace_index
 
 
 def _dominant_language(tokens: Sequence[dict]) -> str:
@@ -29,12 +33,20 @@ def _dominant_language(tokens: Sequence[dict]) -> str:
 def build_lexicon(repo_root: Optional[Path], backend) -> Dict[str, str]:
     """Corpus concepts + (for the mock) its synonym table."""
     pairs = None
+    if repo_root is None:
+        packaged = Path(__file__).parent / "data"
+        if packaged.is_dir():
+            repo_root = packaged.parent
     if repo_root is not None:
         try:
             from j7scope.data import load_parallel_pairs
             pairs = load_parallel_pairs(repo_root / "data")
         except Exception:
             pairs = None
+    if repo_root is None:
+        packaged = Path(__file__).parent / "data"
+        if packaged.is_dir():
+            repo_root = packaged.parent
     extra = None
     # MockBackend exposes a module-level lexicon; import lazily to avoid a hard dep.
     try:
@@ -68,7 +80,7 @@ def record_trace(
     if not buffered:
         return None
 
-    trace_id = trace_id or ("rec-" + uuid.uuid4().hex[:8])
+    trace_id = trace_id or ("rec-" + uuid.uuid4().hex[:16])
     language = language or _dominant_language(buffered)
 
     tokens = rigor.compute_trace_rigor(buffered, lexicon, seed=seed)
@@ -111,6 +123,10 @@ def record_trace(
             "created_at": datetime.now(timezone.utc).isoformat(),
         },
         "is_demo": is_demo,
+        "preview": True,
+        "adapter": getattr(backend, "adapter_name", None),
+        "lexicon": {"entries": len(lexicon), "coverage": "unvalidated",
+                    "sha256": hashlib.sha256(json.dumps(lexicon, sort_keys=True, ensure_ascii=False).encode()).hexdigest()},
         "doi": None,
     }
 
@@ -128,5 +144,15 @@ def record_trace(
         "frac_above_null": round(above_null / len(tokens), 4),
     }
 
-    return write_trace(record_dir / trace_id, manifest=manifest,
-                       tokens=tokens, metrics=metrics)["manifest"].parent
+    record_dir = Path(record_dir)
+    record_dir.mkdir(parents=True, exist_ok=True)
+    destination = record_dir / trace_id
+    if destination.exists():
+        raise FileExistsError(f"trace already exists: {trace_id}")
+    # Publish the complete directory before atomically replacing the gallery index.
+    with tempfile.TemporaryDirectory(prefix=".capture-", dir=record_dir) as work:
+        staged = Path(work) / trace_id
+        write_trace(staged, manifest=manifest, tokens=tokens, metrics=metrics)
+        os.replace(staged, destination)
+    rebuild_trace_index(record_dir)
+    return destination

@@ -57,7 +57,8 @@ def load_model(name: str = "Qwen/Qwen2.5-7B-Instruct", device: str | None = None
 
 
 def _decoder_layers(model):
-    return model.model.layers
+    from j7scope.adapters import get_adapter
+    return get_adapter(model).layers(model)
 
 
 class _Capture:
@@ -599,7 +600,9 @@ class JLens:
             raise RuntimeError("call estimate_jacobian() (or load a saved J) first")
         z = (self._J_on(h_l.device) @ h_l.float()).to(self.model.dtype)
         with torch.no_grad():
-            logits = self.model.lm_head(self.model.model.norm(z)).float()
+            from j7scope.adapters import get_adapter
+            adapter = get_adapter(self.model)
+            logits = adapter.unembed(self.model)(adapter.norm(self.model)(z)).float()
         top = logits.topk(k)
         return [(self.tokenizer.decode([i]), round(v, 3))
                 for i, v in zip(top.indices.tolist(), top.values.tolist())]

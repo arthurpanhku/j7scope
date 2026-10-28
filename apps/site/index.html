@@ -8,8 +8,9 @@
 </head>
 <body>
   <header>
-    <h1><a href="./">J7Scope</a> <span class="sub">J-Space Gallery · 双生工作空间</span></h1>
+    <h1><a href="./">J7Scope</a> <span class="sub">Representation Observatory · 实验回放</span></h1>
     <nav>
+      <a href="connect.html">Connect</a>
       <a href="method.html">Methodology</a>
       <a href="https://github.com/arthurpanhku/j7scope">GitHub</a>
       <a id="liveLink" href="live.html" style="display:none">▶ Live</a>
@@ -28,7 +29,7 @@
 
   <footer>
     Demo traces are synthetic (clearly marked <span class="badge demo">DEMO</span>) but
-    honestly run through the real rigor pipeline. Real, DOI-bearing traces land with P3.
+    honestly run through the real rigor pipeline. Preview read-outs are exploratory and do not establish cross-language sharing.
   </footer>
 
 <script src="assets/jspace.js"></script>
@@ -43,8 +44,8 @@
 
   J.fetchIndex().then(function (idx) {
     if (!idx || !idx.traces || !idx.traces.length) {
-      el.innerHTML = '<p class="empty">No traces yet. Generate demo traces with '
-        + '<code>python experiments/build_demo_trace.py</code>.</p>';
+      el.innerHTML = '<p class="empty">No visible traces. Connect to your session, or record a generation with '
+        + '<code>j7scope --backend mock --record ./traces</code>.</p>';
       return;
     }
     // Group parallel members so the pair links to the compare view.

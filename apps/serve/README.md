@@ -1,164 +1,53 @@
-# j7scope-serve · Live J-Space sidecar
+# j7scope-serve · Research Preview
 
-A side-channel that shows the **J-space read-out of an open-weights model in
-real time**, while an agent harness (opencode, codex, …) is driving that model.
+The installable service for J7Scope's self-hosted LLM representation observatory.
+It hosts a supported model, computes J-lens read-outs, and serves session-scoped
+SSE, recorded traces, and a bundled viewer. Local and cloud-hosted weights use the
+same backend; a plain remote chat API is insufficient for internal activations.
 
-```
-┌──────────────┐   OpenAI /v1/chat/completions    ┌────────────────────────┐
-│  opencode /  │ ───────────────────────────────▶ │  j7scope-serve        │
-│  codex /     │ ◀──────── token stream ───────── │  (proxy + J-lens hook)  │
-│  any OpenAI  │                                   │                         │
-│  client      │                                   │  per token: read out    │
-└──────────────┘                                   │  h_l ─J_l─▶ concepts    │
-       ▲                                            └───────────┬────────────┘
-       │ coding as usual                                        │ SSE side-channel
-┌──────┴───────┐        GET /jspace/stream                      │ {token, zh[], en[]}
-│ J-Space view │ ◀──────────────────────────────────────────────┘
-│  (browser)   │
-└──────────────┘
-```
-
-**Why only open models.** The read-out is computed from the model's residual
-stream (`h_l`), so the sidecar must host the weights itself. Closed API models
-(Anthropic, OpenAI, …) never expose activations — for those, the harness works
-normally but there is no J-Space to show. This tool is for the case where a
-harness is pointed at a **local open-weights model**.
-
-## Quickstart (no GPU)
-
-The mock backend has **zero dependencies** (stdlib only) and synthesises a
-plausible bilingual read-out, so you can wire everything up first:
+See the [installation and remote deployment manual](../../docs/research-preview.md),
+[extension contracts](../../docs/extending.md), and [validation report](../../docs/validation/smollm2-135m-cpu.json).
 
 ```bash
-cd apps/serve
-python -m j7scope_serve --backend mock
-# gallery at http://127.0.0.1:8799/ , live view at /live.html ; then in another shell:
-curl -N http://127.0.0.1:8799/v1/chat/completions \
-  -H 'content-type: application/json' \
-  -d '{"stream":true,"messages":[{"role":"user","content":"hi"}]}'
+# From a checkout:
+pip install -e '.[hf]'
+j7scope --config examples/smollm-cpu.json
+# Or no PyTorch required for mock:
+pip install -e .
+j7scope --backend mock --record ./traces
 ```
 
-The live view (`/live.html`) lights up token by token. Everything from the mock
-backend is clearly marked `DEMO`. The sidecar serves the static platform in
-[`../site`](../site) (gallery / replay / compare / live) at `/`.
+Source-only stdlib mock remains available from this directory as
+`python -m j7scope_serve --backend mock` (without recording).
 
-## Real read-out
+| Endpoint | Access / purpose |
+|---|---|
+| `GET /health` | Public liveness only |
+| `GET /ready` | Authenticated model readiness and capabilities |
+| `GET /v1/models` | Authenticated loaded model |
+| `POST /v1/chat/completions` | Authenticated text-chat subset, streaming or JSON |
+| `GET /jspace/stream` | Authenticated session-specific SSE and backlog |
+| `POST /jspace/interventions` | Authenticated serialized activation patch |
+| `POST /jspace/sessions` | Operator creates a separate, expiring session credential |
+| `GET /jspace/session` | Inspect own session identity |
+| `POST /auth/login`, `/auth/logout` | Bearer-to-cookie browser connection / logout |
+| `GET /traces/*` | Only the authenticated session's recordings |
+| `GET /`, `/live.html`, `/connect.html`, etc. | Public static viewer assets |
 
-Needs `torch` + `transformers` (from the repo root `pip install -e .`) and enough
-VRAM for the model. The sidecar reuses [`j7scope.fitting.JLens`](../../j7scope/fitting.py):
-`J_l` is fitted once on a small generic corpus (cached to disk), then every
-generated token's residual is read out through it.
+Loopback without a key retains a single local workspace. Non-loopback binding
+requires `J7SCOPE_API_KEY` with at least 32 ASCII characters. Remote researchers
+share a session key between their text client and browser connection; the operator
+key belongs to a separate operator workspace. Use SSH forwarding or HTTPS with
+`--secure-cookie`, and one process per model/data directory.
 
-```bash
-python -m j7scope_serve --backend hf \
-  --model Qwen/Qwen2.5-7B-Instruct --layer 18 \
-  --model-revision main --dtype auto \
-  --jacobian-file ../../results/jacobian-qwen2.5-7b-l18.pt
-```
+The server serializes all model tasks, limits connections, viewers, body size, and
+generation length, and returns 503 with Retry-After when its queue fills. Generation
+timeouts are cooperative between forward passes. Model loading happens before the
+CLI accepts requests. Failed/partial requests are not published as complete traces.
+Recorded directories and gallery indexes are atomically published. Read-out method
+and hardware provenance are retained; all new traces are marked `preview:true`.
 
-`--jacobian-file` 直接加载
-[`experiments/fit_paper_jacobian.py`](../../experiments/fit_paper_jacobian.py)
-生成的正式矩阵；省略它时才会用小语料和随机 position-local estimator 临时拟合，可通过
-`--jacobian-cache` 缓存，但这种快速路径只适合 wiring/preview，不应当作为研究结果。
-`--dtype auto` 在支持 BF16 的 CUDA GPU 上选择 `bfloat16`，在 T4 等旧卡上选择
-`float16`，CPU 则选择 `float32`。录制 manifest 会保存解析后的模型 revision、实际
-device/dtype、estimator 和 Jacobian SHA-1。
-
-## Record & replay (platform P1)
-
-Live sessions are ephemeral; **traces** are the citable, deep-linkable artifact
-(see [docs/platform-plan.md](../../docs/platform-plan.md)). Record every session
-and serve them back for replay:
-
-```bash
-# record each session as a Trace v1, and serve traces for the replay viewer
-python -m j7scope_serve --backend mock --record ../../results/traces
-
-# or generate deterministic demo traces without a model (zero GPU):
-python ../../experiments/build_demo_trace.py
-python -m j7scope_serve --backend mock --traces ../../results/traces
-```
-
-Then browse the gallery and open a trace:
-
-- `http://127.0.0.1:8799/` — gallery of all traces in `traces/index.json`
-- `…/replay.html?trace=demo-narrative-en` — play a trace token by token (export SVG/PNG/JSON/BibTeX)
-- deep-link a moment: `…/replay.html?trace=demo-narrative-en#token=3`
-- `…/compare.html?group=demo-parallel` — synced side-by-side zh/en replay
-
-At each token the **rigor strip** shows the cross-lingual concept overlap against
-a shuffled-pairing **null band** — a bar past the null band is a real signal, not
-chance. The rigor layer (null, same-language ceiling, `sharedness` + CI) is
-computed once by [`j7scope/rigor.py`](../../j7scope/rigor.py) and baked into the
-trace at capture time; the viewer only displays it. Trace Schema v1 lives in
-[`j7scope/trace.py`](../../j7scope/trace.py).
-
-## Harness integration
-
-- **opencode** → [`integrations/opencode/`](integrations/opencode/) (provider
-  config + optional plugin).
-- **codex / other OpenAI-compatible harnesses** → point the provider `base_url`
-  at `http://127.0.0.1:8799/v1`; open the viewer for display. The side-channel is
-  harness-agnostic, so any client works — only the convenience plugin is
-  opencode-specific.
-
-## HTTP surface
-
-| route | method | purpose |
-|---|---|---|
-| `/v1/chat/completions` | POST | OpenAI chat, streaming or not; drives generation |
-| `/v1/models` | GET | one model entry (harnesses probe this) |
-| `/jspace/stream` | GET | SSE: one J-space event per generated token |
-| `/jspace/interventions` | POST | one activation-patching probe (`hf` backend only) |
-| `/`, `/replay.html`, `/compare.html`, `/live.html`, `/assets/*` | GET | the static platform ([`../site`](../site)) |
-| `/traces/*` | GET | recorded Trace v1 files (when `--traces`/`--record` set) |
-| `/health` | GET | backend / model / layer / viewer count |
-
-`/health.capabilities.activation_patch` tells Contrast Lab whether the connected
-sidecar can run a causal A/B probe. The intervention endpoint accepts
-`source_prompt`, `target_prompt`, `patch_layer`, optional source/target positions,
-and `topk`; it is deliberately unavailable on the synthetic mock backend.
-
-### Side-channel event
-
-Each token emits (see [`protocol.py`](j7scope_serve/protocol.py)):
-
-```jsonc
-{
-  "type": "token",
-  "seq": 12,
-  "request_id": "chatcmpl-…",   // correlates with the OpenAI response id
-  "token": "deception",          // the surface token just emitted
-  "layer": 18,
-  "readout": {
-    "zh": [{ "token": "欺骗", "score": 11.8, "rank": 0 }, …],
-    "en": [{ "token": "deception", "score": 11.0, "rank": 1 }, …]
-  }
-}
-```
-
-The `zh` / `en` split is the live analogue of J7Scope's research question: a
-*single* J-lens read-out, bucketed by script. When both columns light up on the
-same concept at once, that workspace direction is shared across languages.
-
-## Layout
-
-```
-apps/serve/
-├── j7scope_serve/
-│   ├── __main__.py     # CLI (--record / --traces)
-│   ├── app.py          # stdlib HTTP server: OpenAI proxy + SSE + static site + traces
-│   ├── backends.py     # MockBackend (stdlib) + HFBackend (torch, reuses JLens)
-│   ├── bus.py          # thread-safe fan-out to viewers
-│   ├── recorder.py     # buffer a session -> rigor pass -> Trace v1
-│   └── protocol.py     # event schema + zh/en script bucketing
-└── integrations/opencode/
-
-apps/site/              # the static platform served at / (also GitHub Pages)
-├── index.html          # gallery       replay.html   compare.html   live.html
-└── assets/jspace.{css,js}   # shared rendering + export (SVG/PNG/JSON/BibTeX)
-```
-
-> The mock backend is a wiring/demo aid, not an experiment. It never loads a
-> model; its read-out is synthetic and marked `is_demo`. Research conclusions
-> come only from the `hf` backend and the artifacts in [`../../results`](../../results).
+The `mock` backend is synthetic DEMO data. The `hf` backend has real pretrained
+SmolLM2 CPU pipeline validation. GPU/model-specific semantic quality requires further
+validation. `zh` and `en` columns are script buckets, not independent proof of shared
+cross-language representations. Tool calling and structured outputs are unsupported.

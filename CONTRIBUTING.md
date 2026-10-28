@@ -3,6 +3,15 @@
 感谢你帮助扩展跨语言 J-space trace。最有价值的贡献是：可复现、明确标注局限、不会把
 preview 当作研究结论的真实模型采集。
 
+## 工具开发与研究预览
+
+项目定位为可自行部署的 LLM 内部表示观测与实验工具；双语研究是首个应用。
+安装与部署见 [研究预览手册](docs/research-preview.md)，扩展接口见
+[extending.md](docs/extending.md)。修改服务时运行 `pytest -q tests/test_service.py
+ tests/test_extensions.py`；修改模型路径后运行 `j7scope-validate`，不得把 mock 或少量
+随机探针的读出当作研究结论。打包变更需 `python -m build`、`python -m twine check dist/*`，
+并在仓库外的干净环境运行 `scripts/smoke_installed.py --require-no-torch`。
+
 ## 快速路径：Colab 采集
 
 1. 在 Google Colab 打开 `notebooks/capture_colab.ipynb`。
@@ -17,7 +26,7 @@ estimator 和张量 SHA-1 会写进 manifest。
 也可以在任何 CUDA 机器直接运行：
 
 ```bash
-pip install -e .
+pip install -e '.[hf]'
 python experiments/capture_trace.py \
   --trace-id community-deception-en \
   --language en \

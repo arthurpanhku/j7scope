@@ -1,0 +1,8 @@
+include LICENSE NOTICE
+recursive-include apps/site *.html *.css *.js
+recursive-include apps/serve/j7scope_serve *.py
+include data/probe_prompts_en.jsonl data/probe_prompts_zh.jsonl
+include CONTRIBUTING.md CHANGELOG.md Dockerfile compose.yaml
+recursive-include docs *.md *.json
+recursive-include examples *.json
+include scripts/smoke_installed.py

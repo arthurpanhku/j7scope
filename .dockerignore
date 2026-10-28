@@ -1,0 +1,14 @@
+.git
+.venv
+node_modules
+**/node_modules
+.dvalin
+.aws
+.env*
+*.pt
+*.pth
+*.safetensors
+hf_cache
+results
+build
+dist

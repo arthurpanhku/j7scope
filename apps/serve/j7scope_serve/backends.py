@@ -39,6 +39,13 @@ class Backend:
     jacobian_estimator: str = "not_applicable"
     supports_intervention: bool = False
 
+    def capabilities(self):
+        return {"jspace_readout": not self.is_demo, "activation_patch": self.supports_intervention,
+                "synthetic": self.is_demo, "text_chat": True, "tool_calls": False}
+
+    def ready(self):
+        return True
+
     def generate(self, messages: Sequence[dict], **params) -> Iterator[Step]:
         raise NotImplementedError
 
@@ -189,6 +196,8 @@ class HFBackend(Backend):
         self._tok = None
         self._jlens = None
         self._capture = None
+        self._capture_handle = None
+        self.adapter_name = None
 
     # ---- warm-up ----------------------------------------------------------
 
@@ -196,6 +205,8 @@ class HFBackend(Backend):
         import torch
         from j7scope.fitting import JLens, load_model, _Capture
 
+        if self._model is not None:
+            return
         dtype = self._resolve_dtype(torch)
         model, tok = load_model(
             self.model_name,
@@ -232,13 +243,21 @@ class HFBackend(Backend):
                 seed=self.jacobian_seed,
             )
             self._save_cached_jacobian(jlens.J)
+        if not torch.isfinite(jlens.J).all():
+            raise ValueError("Jacobian contains non-finite values")
         self.jacobian_sha1 = self._tensor_sha1(jlens.J)
 
         # Persistent hook: capture the residual at layer l on every forward.
         cap = _Capture()
-        model.model.layers[self.layer].register_forward_hook(cap)
+        from j7scope.adapters import get_adapter
+        adapter = get_adapter(model)
+        self.adapter_name = adapter.name
+        self._capture_handle = adapter.layers(model)[self.layer].register_forward_hook(cap)
 
         self._model, self._tok, self._jlens, self._capture = model, tok, jlens, cap
+
+    def ready(self):
+        return self._model is not None
 
     def _resolve_dtype(self, torch):
         allowed = {"auto", "bfloat16", "float16", "float32"}
@@ -344,7 +363,7 @@ class HFBackend(Backend):
         import os
         import torch
         if os.path.exists(path):
-            return torch.load(path, map_location="cpu")
+            return torch.load(path, map_location="cpu", weights_only=True)
         return None
 
     def _save_cached_jacobian(self, J) -> None:
@@ -352,7 +371,8 @@ class HFBackend(Backend):
         if not path:
             return
         import torch
-        torch.save(J, path)
+        from j7scope.fitting import _atomic_torch_save
+        _atomic_torch_save(J, path)
 
     # ---- generation -------------------------------------------------------
 
@@ -363,9 +383,13 @@ class HFBackend(Backend):
             self.load()
         model, tok, jlens, cap = self._model, self._tok, self._jlens, self._capture
 
-        prompt_ids = tok.apply_chat_template(
-            list(messages), add_generation_prompt=True, return_tensors="pt"
-        ).to(model.device)
+        encoded = tok.apply_chat_template(
+            list(messages), add_generation_prompt=True, return_tensors="pt", return_dict=True
+        )
+        prompt_ids = encoded["input_ids"].to(model.device)
+        context_limit = getattr(model.config, "max_position_embeddings", 2048)
+        if prompt_ids.shape[1] + int(params.get("max_tokens") or self.max_new_tokens) > context_limit:
+            raise ValueError("prompt plus generation exceeds model context window")
 
         max_new = int(params.get("max_tokens") or self.max_new_tokens)
         temperature = float(params.get("temperature", 0.0) or 0.0)
@@ -385,7 +409,9 @@ class HFBackend(Backend):
                 else:
                     next_id = logits.argmax(-1)
 
-                if next_id.item() == tok.eos_token_id:
+                eos = getattr(model.generation_config, "eos_token_id", None) or tok.eos_token_id
+                eos_ids = eos if isinstance(eos, (list, tuple)) else [eos]
+                if next_id.item() in eos_ids:
                     break
 
                 topk = jlens.readout(h_l, k=self.topk)
@@ -442,4 +468,16 @@ def make_backend(kind: str, **kw) -> Backend:
                                      "device", "jacobian_corpus", "n_probes", "cache_dir",
                                      "dtype", "model_revision", "jacobian_path",
                                      "jacobian_metadata_path")})
-    raise ValueError(f"unknown backend: {kind!r} (use 'mock' or 'hf')")
+    from importlib.metadata import entry_points
+    entries = [e for e in entry_points(group="j7scope.backends") if e.name == kind]
+    if len(entries) == 1:
+        backend = entries[0].load()(**kw)
+        if not isinstance(backend, Backend):
+            raise TypeError("backend plugins must subclass j7scope_serve.backends.Backend")
+        return backend
+    raise ValueError(f"unknown or ambiguous backend: {kind!r}; available: {backend_names()}")
+
+
+def backend_names():
+    from importlib.metadata import entry_points
+    return sorted({"mock", "hf"} | {e.name for e in entry_points(group="j7scope.backends")})
