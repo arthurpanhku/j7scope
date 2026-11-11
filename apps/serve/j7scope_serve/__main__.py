@@ -70,6 +70,8 @@ def main() -> None:
     p.add_argument("--n-probes", type=int, default=16, help="preview Jacobian probes per prompt")
     p.add_argument("--corpus", help="JSON array of strings for preview lens fitting")
     p.add_argument("--lexicon", help="JSON surface-token to concept mapping for recorded traces")
+    p.add_argument("--mood-embeddings", action="store_true",
+                   help="rank English words with the cached local MiniLM encoder")
     p.add_argument("--backend-options", help="JSON object passed to an installed backend plugin")
     p.add_argument("--allowed-origin", action="append", default=[])
     p.add_argument("--max-queue", type=int, default=4)
@@ -127,6 +129,11 @@ def main() -> None:
     backend = make_backend(args.backend, **kw)
     if hasattr(backend, "load"):
         backend.load()
+    mood_embeddings = None
+    if args.mood_embeddings:
+        from j7scope_serve.mood_embeddings import MoodEmbeddings
+
+        mood_embeddings = MoodEmbeddings()
     serve(backend, host=args.host, port=args.port, per_lang=args.per_lang,
           token_delay=args.token_delay, record_dir=args.record,
           traces_dir=args.traces, repo_root=_REPO_ROOT, api_key=api_key,
@@ -134,7 +141,7 @@ def main() -> None:
           queue_timeout=args.queue_timeout, request_timeout=args.request_timeout,
           max_body=args.max_body, max_tokens=args.max_new_tokens,
           max_viewers=args.max_viewers, secure_cookie=args.secure_cookie,
-          session_ttl=args.session_ttl, lexicon_file=args.lexicon)
+          session_ttl=args.session_ttl, lexicon_file=args.lexicon, mood_embeddings=mood_embeddings)
 
 
 if __name__ == "__main__":

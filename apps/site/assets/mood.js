@@ -102,6 +102,22 @@
     render(Signal.classifyText(""), { detail: detail, label: label });
   }
 
+  function showVectorWords(words, source, status) {
+    var list = $("vector-words");
+    list.replaceChildren();
+    message("vector-source", source);
+    message("vector-status", status);
+    for (var entry of words.slice(0, 6)) {
+      if (!entry || typeof entry.word !== "string" || !Number.isFinite(entry.score)) continue;
+      var chip = document.createElement("li");
+      chip.append(entry.word);
+      var score = document.createElement("small");
+      score.textContent = entry.score.toFixed(2);
+      chip.append(score);
+      list.append(chip);
+    }
+  }
+
   function analyze(record, timestamp) {
     var isReadout = mode === "live" && $("live-basis").value === "readout";
     var observed = mode === "live" ? text.slice(-500) : text;
@@ -125,6 +141,7 @@
   function openLive() {
     var epoch = modeVersion;
     var toolsMode = mode === "tools";
+    var demoReadout = false;
     connection("正在连接…", "waiting");
     message("live-status", "等待当前服务的实时事件流…");
     message("model-label", "等待连接模型…");
@@ -148,6 +165,7 @@
       generationActive = false;
       stale = true;
       readout = null;
+      showVectorWords([], "", "等待词汇信号。");
       connection("连接中断 · 正在重试", "error");
       if (toolsMode) {
         message("tool-status", "尚未收到工具事件。请连接专用会话并检查本机服务。");
@@ -178,12 +196,23 @@
         text = ev.text;
         raw("tool-label", ev.source);
         message("source-tag", "{source} · 文字", { source: ev.source });
-        message("tool-status", ev.phase === "update" ? "显示工具最新推送的文字。" : "显示工具最近一次已完成的回复。");
-        connection(ev.phase === "update" ? "工具更新 · 最新一次" : "工具回复 · 已完成");
+        if (ev.phase === "interrupted") {
+          message("tool-status", "显示中断前收到的回复片段。");
+          connection("模型回复已中断", "error");
+        } else {
+          message("tool-status", ev.phase === "update" ? "显示工具最新推送的文字。" : "显示工具最近一次已完成的回复。");
+          connection(ev.phase === "update" ? "模型正在回复 · 实时更新" : "工具回复 · 已完成");
+        }
+        var neighbors = Array.isArray(ev.neighbors) ? ev.neighbors : [];
+        showVectorWords(neighbors.map(function (entry) {
+          return entry && { word: entry.word, score: entry.cosine };
+        }), neighbors.length ? "MiniLM · 余弦相似度" : "",
+        neighbors.length ? "根据回复文字，在本机词表中找语义近邻。" : "当前推送没有文字嵌入词汇。");
         analyze(fresh, ev.ts * 1000);
         return;
       }
       if (ev.type === "meta") {
+        demoReadout = ev.is_demo === true;
         if (typeof ev.model === "string") raw("model-label", ev.model);
         else message("model-label", "未知模型");
         $("layer-label").textContent = "L " + (Number.isInteger(ev.layer) ? ev.layer : "—");
@@ -197,6 +226,7 @@
         stale = false;
         text = "";
         readout = null;
+        showVectorWords([], "", "等待词汇信号。");
         message("observed-text", "模型开始生成…");
         unknown("新一轮生成开始，等待情绪信号。", "等待信号");
         message("live-status", "模型正在生成，信号逐 token 更新。");
@@ -214,6 +244,14 @@
         lastSeq = ev.seq;
         text = (text + (typeof ev.text === "string" ? ev.text : ev.token)).slice(-5000);
         readout = ev.readout;
+        var ranked = ["zh", "en"].flatMap(function (lang) {
+          return Array.isArray(readout?.[lang]) ? readout[lang] : [];
+        }).filter(function (entry) {
+          return entry && typeof entry.token === "string" && Number.isFinite(entry.rank);
+        }).sort(function (a, b) { return a.rank - b.rank; });
+        showVectorWords(ranked.map(function (entry) {
+          return { word: entry.token, score: entry.score };
+        }), demoReadout ? "J-lens · 合成演示" : "J-lens · 分数", "按当前词汇读出的排名显示。");
         generationActive = true;
         lastTokenAt = Date.now();
         stale = false;
@@ -225,6 +263,7 @@
         if (ev.status !== "complete") {
           stale = true;
           readout = null;
+          showVectorWords([], "", "等待词汇信号。");
           unknown("生成已中断，部分输出不作为完整结果。", "生成中断");
         }
         message("live-status", ev.status === "complete" ? "本轮生成已完成，当前显示本轮结果。" : "生成中断，请检查服务后重试。");
@@ -241,6 +280,8 @@
     if (requestController) requestController.abort();
     events = timer = requestController = null;
     mode = next;
+    $("vector-section").hidden = mode !== "tools" && mode !== "live";
+    showVectorWords([], "", "等待词汇信号。");
     seenToolEvents.clear();
     history = [];
     text = "";
@@ -284,6 +325,7 @@
         if (generationActive && !stale && Date.now() - lastTokenAt > 15000) {
           stale = true;
           readout = null;
+          showVectorWords([], "", "等待词汇信号。");
           unknown("15 秒未收到新 token，等待信号恢复。", "信号已暂停");
           connection("信号暂停", "waiting");
         }
