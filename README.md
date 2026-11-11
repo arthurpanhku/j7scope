@@ -12,16 +12,18 @@
 
 ## 1. 工具定位与当前范围
 
-J7Scope 把模型内部读出、实验干预和可分享的 trace 连接起来。双语 J-space 研究是首个应用；研究员也可以替换模型、概念词表和拟合语料，构建自己的实验。
+J7Scope 的核心目标是让 LLM 内部表示实验可观测、可复现。首个研究问题是：同一概念在中英文语境中是否激活相近的 J-space 方向？平台用 J-lens 读出、干预和可回放的 trace 支持检验这一问题，也允许研究员替换模型、概念词表和拟合语料。
+
+[实时心情看板](#心情实时看板) 是一项辅助功能。它展示模型回复或 J-lens 读出中的情绪词汇信号；接入 Codex、Claude Code 等工具时，信号来自助手回复文本。
 
 | 使用方式 | 支持范围 |
 |---|---|
 | 本地模型 | HF 后端直接加载权重、捕获激活和拟合／加载 lens |
 | 云端自托管模型 | 模型和 J7Scope 在同一计算节点运行，本地浏览器经 SSH／HTTPS 连接 |
-| 普通商用聊天 API | 不提供内部激活时不能做真实 J-Space 读出；本版不附带此类后端 |
+| Codex、Claude Code 等工具 | 看板可显示助手回复的语气信号。J-lens 研究需要模型内部激活 |
 | 离线分享 | 浏览器回放 Trace v1，无需模型或 GPU |
 
-**研究预览版，不是完成的研究结论。** 已用 SmolLM2-135M 预训练权重在 CPU 上验证生成、独立激活捕获、读出一致性、恒等干预和 trace 导出，见[验证记录](docs/validation/smollm2-135m-cpu.json)。少量随机探针只验证计算链路，不保证读出的语义质量或跨语言共享。Qwen GPU 性能与 Docker GPU 运行仍需部署机器验证。
+**研究预览版，不是完成的研究结论。** 已用 SmolLM2-135M 预训练权重在 CPU 上验证生成、独立激活捕获、读出一致性、恒等干预和 trace 导出，见[验证记录](docs/validation/smollm2-135m-cpu.json)。少量随机探针只验证计算链路，不保证读出的语义质量或跨语言共享。Qwen 的正式中英配对实验与 GPU 部署验证仍待完成，见[路线图](#9-路线图)。
 
 服务面向个人研究者和受信任实验室：会话凭证隔离事件和录制，模型任务有界串行排队。当前仅支持 OpenAI 风格的**文本聊天子集**；tool calling、完整 agent 执行和任意模型兼容性不在本版承诺中。
 
@@ -96,7 +98,7 @@ Read the [deployment guide](docs/research-preview.md) and [extension contracts](
 
 一个零 GPU 的静态平台（[`apps/site`](apps/site)）：sidecar 在 `/` 提供，也可原样部署到 GitHub Pages（本仓库已通过 [`.github/workflows/pages.yml`](.github/workflows/pages.yml) 自动部署到上面的地址）。录制的 trace 可按 token 回放，深链到任意时刻，导出论文级 SVG/PNG/JSON/BibTeX。以下截图为明确标注的 `DEMO` 合成数据，但均经过真实的严谨层管线计算。
 
-**Compare · 双生对齐** —— 研究主张的"证据画面"。同一叙事的中文与英文两条会话按位置对齐回放；顶部 **Cross-trace rigor** 条显示在对齐位置上两种语言是否落在同一概念（越过打乱配对 null 带才算真信号），两侧读出中共享的概念被下划线标出。
+**Compare · 双生对齐** 按位置对齐同一叙事的中英文会话。顶部 **Cross-trace rigor** 条将对齐位置上的概念重叠与打乱位置配对的基线比较。两侧共有的概念以下划线标出。
 
 <p align="center"><img src="docs/screenshots/compare.png" width="840" alt="Compare view: cross-trace rigor strip + aligned zh/en sessions" /></p>
 
@@ -116,7 +118,7 @@ python experiments/build_contrast.py trace-a trace-b \
 
 <p align="center"><img src="docs/screenshots/gallery.png" width="840" alt="J-Space Gallery landing page" /></p>
 
-**Replay** —— 单条 trace 逐 token 回放。每个 token 的 **rigor strip** 把跨语言概念重叠画在 null 带之上（越过才是真信号），并给出 sharedness 及其置信区间；右上角可导出。
+**Replay** 逐 token 回放单条 trace。每个 token 的 **rigor strip** 将同一次读出中两列词汇的概念重叠与打乱配对基线比较，并显示 sharedness 及其置信区间。右上角可导出。
 
 <p align="center"><img src="docs/screenshots/replay.png" width="840" alt="Replay view: per-token rigor strip with null band + zh/en read-out columns" /></p>
 
@@ -124,11 +126,9 @@ python experiments/build_contrast.py trace-a trace-b \
 
 ## 4. 研究背景
 
-Anthropic 2026 年 7 月的论文 [*Verbalizable Representations Form a Global Workspace in Language Models*](https://transformer-circuits.pub/2026/workspace/index.html) 提出 **J-lens**：把中间层残差流通过输入-输出 Jacobian 的期望线性映射到最终层坐标，再用模型自己的 unembedding 解码，读出模型"倾向于说但还没说"的概念。论文发现这些可读出的方向构成一个稀疏子空间（**J-space**，约占激活方差的 6–10%），具备远超随机的广播式读写连接，功能上对应认知科学里的"全局工作空间"（global workspace）。
+Anthropic 2026 年 7 月的论文 [*Verbalizable Representations Form a Global Workspace in Language Models*](https://transformer-circuits.pub/2026/workspace/index.html) 提出 **J-lens**：把中间层残差流通过输入-输出 Jacobian 的期望线性映射到最终层坐标，再用模型自己的 unembedding 解码，读出模型"倾向于说但还没说"的概念。论文将这些方向称为 **J-space**，并在所测模型中报告了广播式读写连接。在其激活方差实验中，稀疏 J-lens 分解比等规模随机对照多解释的方差最多为 10 个百分点。作者将这些现象与认知科学的全局工作空间联系起来。
 
-论文的语料全部是英文网页文本，J-lens 的拟合和验证都在单一语言内完成。这留下了一个论文没有回答的问题：
-
-> 如果 workspace 是模型真正的"概念层"表示，它应该是语言无关的 —— 同一个概念不管用中文还是英文触发，都应该落在 J-space 里相近的方向上。**需要在开源模型上系统测量其共享程度、失效边界与安全监控价值。** 原论文已含多语言测试，并展示英文 J-lens 坐标干预改变中文输出；本项目不以首次发现跨语言 J-space 为创新主张。
+原论文包含多语言测试，其中一个案例显示，干预英文 J-lens 坐标可以改变中文输出。J7Scope 计划在开放权重模型上用配对任务系统评估中英文共享的程度与边界，并探索这些读出能否帮助监控可标注的模型行为。
 
 官方配套代码 [`anthropics/jacobian-lens`](https://github.com/anthropics/jacobian-lens)（Apache-2.0）明确标注为"参考实现，不维护、不接受贡献"，公开的开源模型 demo 也只是单语言可视化工具。本项目关注开源模型的系统双语评估与可复现的因果对照。
 
@@ -138,9 +138,9 @@ Anthropic 2026 年 7 月的论文 [*Verbalizable Representations Form a Global W
 
 | | 假设 | 含义 |
 |---|---|---|
-| **H1** | **语言无关** —— 中英文触发高度重叠的方向 | 支持论文"这是模型真正思维层"的核心主张 |
-| **H2** | **语言特异** —— 中英文触发基本不重叠的方向 | 说明当前的 J-space 更接近"表层语言习惯"而非语言无关的概念空间，是对论文核心主张的重要反例 |
-| **H3** | **部分共享 / 分级** —— 抽象概念（情绪、意图类）共享程度高，具体实体概念（人名、专名）共享程度低 | 最可能的真实情况，也是最有信息量的结果 |
+| **H1** | **跨语言共享**：中英文触发高度重叠的方向 | 支持所测任务中存在共享的概念表示 |
+| **H2** | **语言特异**：中英文方向的重叠接近打乱配对基线 | 所测条件下跨语言共享的证据有限 |
+| **H3** | **部分共享**：情绪、意图等抽象概念的重叠高于人名等具体实体 | 共享程度可能随概念类型变化 |
 
 ## 6. 方法
 
@@ -158,7 +158,7 @@ Anthropic 2026 年 7 月的论文 [*Verbalizable Representations Form a Global W
 ### 6.3 分析方法（建议按顺序推进，先便宜后昂贵）
 
 - **M1 相关性分析（便宜，先做）。** 用同一个 J_l（在固定语料分布上估计的输入输出 Jacobian 期望；需另做中/英/混合拟合语料消融）分别读出中文 prompt 和英文 prompt 在对应位置的 top-k token。用 **CKA 或 SVCCA** 衡量两组读出方向的表示相似度，配合 **top-k 重叠率**作为直观指标。
-- **M2 因果验证（贵，M1 有信号后再做）。** Activation patching：把中文语境下"操纵"概念的残差流，patch 进英文语境的前向传播，看 J-lens 读出是否依然是"操纵"类概念。如果 patching 后读出**跟着"概念"走而不是跟着"patch 来源语言"走**，这是比相关性更强的因果证据。
+- **M2 因果验证（M1 有信号后再做）。** 将中文语境中的残差激活移植到英文前向传播，比较干预前后的读出和实际输出。完整残差向量也可能携带来源语言或位置信息。要把效果归因于 J-space 概念，需要与未干预、匹配随机方向等对照比较，并检验干预的特异性。
 - **M3 分级验证（可选，时间富余再做）。** 对比抽象概念 vs 具体实体概念的跨语言重叠率差异，验证 H3。
 
 ### 6.4 指标
@@ -212,7 +212,7 @@ from j7scope.fitting import load_model, JLens
 
 model, tok = load_model("Qwen/Qwen2.5-7B-Instruct")
 jlens = JLens(model, tok, layer=18)
-jlens.estimate_jacobian(corpus_prompts)          # 只拟合一次，语言无关
+jlens.estimate_jacobian(corpus_prompts)          # 在选定语料上拟合，同一映射用于中英文比较
 
 pairs = load_parallel_pairs("data")
 h_zh = jlens.collect_residual(pairs["deception-01"]["zh"]["text"])
@@ -335,24 +335,24 @@ Apache-2.0（见 [LICENSE](LICENSE)）。fitting 逻辑基于 [`anthropics/jacob
 | 术语 | 一句话解释 |
 |---|---|
 | **J-lens**（Jacobian lens） | 把中间层残差流经"期望 Jacobian"线性映射到末层坐标、再用模型自己的 unembedding 解码，读出模型"倾向于说但还没说"的概念。 |
-| **J-space** | J-lens 能读出的方向构成的稀疏子空间（约占激活方差 6–10%），功能上对应"全局工作空间"。 |
+| **J-space** | 由 J-lens 可读方向构成的表示空间。原论文报告，每个位置上高于随机对照的活跃方向数量通常较少。 |
 | **全局工作空间**（Global Workspace） | 认知科学概念：信息被"广播"到一个全局空间供各模块读写；论文借它类比 J-space。 |
 | **残差流**（residual stream, `h_l`） | Transformer 各层之间累加流动的隐藏状态；J-lens 读出的输入就是第 `l` 层的 `h_l`。 |
-| **Jacobian**（`J_l`） | 末层输出对第 `l` 层残差的期望偏导（一个线性映射）；它是**模型的属性、与语言无关**，只拟合一次。 |
+| **Jacobian**（`J_l`） | 在选定语料分布上估计末层状态对第 `l` 层残差的期望偏导。同一映射可以用于中英文比较，拟合语料本身也可能影响结果。 |
 | **Unembedding / lm_head** | 把隐藏向量投回词表 logits 的输出矩阵；读出用它把映射后的向量解码成 token。 |
 | **Logit lens** | 直接用 unembedding 解中间层的更早方法；J-lens 是其"先经 Jacobian 传播再解码"的改良版。 |
 | **读出**（read-out） | 某位置的 `h_l` 经 J-lens 得到的 top-k token / 概念列表。 |
 | **概念空间 / 概念词典**（concept space / lexicon） | 把 zh/en 表层 token（"欺骗" vs "deception"）映到同一个概念，才能跨语言比较。 |
 | **Sharedness** | 观测重叠相对 null 基线与同语言上界的归一化"跨语言共享分"，附带置信区间（CI）。 |
-| **Null 基线**（shuffled-pairing null） | 把配对打乱得到的机会水平；读出必须**越过 null 带**才算真信号（详见 §6.4 的统计陷阱）。 |
+| **Null 基线**（shuffled-pairing null） | 打乱配对得到的机会水平。越过基线带说明观测值高于该基线，正式研究还需独立样本与对照。 |
 | **Top-k 重叠率**（overlap） | 两个读出 / 概念集合的重叠系数，最直观的相似度指标。 |
 | **CKA / SVCCA** | 两组表示方向的相似度指标；样本数 ≪ 维度时基线偏高，必须与 null 一起报告。 |
-| **Activation patching** | 把一处的激活"移植"进另一次前向传播，看输出跟随**概念**还是**来源语言**——比相关性更强的因果证据。 |
+| **Activation patching** | 将一处的激活移植到另一次前向传播，用对照实验检验干预如何影响读出或实际输出。 |
 | **Cloze 探针** | 末尾留空的填空式 prompt（"……是一种___"），在最后一个 token 位置读出。 |
 | **Trace / Replay / Compare** | 本平台的三件套：一次会话录制成的可引用产物 / 逐 token 回放 / 双语并排对齐。 |
 | **Intra-token vs Cross-trace rigor** | 同一次读出内 zh/en 是否一致 vs 两条不同语言会话在对齐位置是否一致（后者是更强的跨语言信号）。 |
 | **Sidecar** | 旁挂在 agent harness 与开源模型之间的 OpenAI 兼容代理，负责读出并旁路显示 J-space。 |
-| **H1 / H2 / H3** | 三种互斥假设：语言无关（共享）/ 语言特异（不重叠）/ 分级（抽象共享、具体绑定）。 |
+| **H1 / H2 / H3** | 三种待检验的模式：跨语言共享、语言特异、按概念类型部分共享。 |
 | **稠密 transformer vs MoE** | 稠密结构便于 Jacobian 计算，故本项目优先选稠密开源模型（Qwen2.5 等）。 |
 
 ## 12. 延伸阅读 / 参考材料
@@ -408,7 +408,7 @@ Ordinary chat APIs cannot substitute for internal activation access. See
 以表情、情绪指数和趋势显示正负情绪信号；也支持合成演示。点击 **集成小窗** 可把看板放在编辑器旁，
 用 Codex、Claude Code 或 OpenCode V1 的回合结束事件自动更新，也可接收其他工具的 HTTP 推送。
 完整看板和小窗均可在右上角切换中英文，也可在 URL 加 `lang=en` 直接打开英文版。
-采用关键词规则，不代表真实心理状态。见 [启动与工具集成说明](docs/mood-monitor.md)。
+指数衡量关键词信号，尚未经过情绪分类验证。输入和合成演示可用于体验界面；观察模型回复时请选择 **实时模型** 或 **工具集成**。见 [启动与工具集成说明](docs/mood-monitor.md)。
 
 在要接入的项目中，使用 `j7scope-integrate` 预览自动发现的 Agent 和配置路径；
 加 `--apply` 写入项目级配置，保留已有钩子。也可用 `--agent` 指定工具。
@@ -432,8 +432,7 @@ j7scope-codex-live --session-key-file /path/to/session-key
 ```
 
 启动 J7Scope 服务时加上 `--mood-embeddings`，小窗会同时显示 **Vector-space words**。
-这六个词是本机 MiniLM 根据最近 500 个字符计算出的语义近邻。
-本地 HF 模型的 J-lens 词汇读出可在 **Live model** 中查看。
+启用此选项需要安装 `[hf]` 依赖并缓存 MiniLM 模型。这六个词来自 MiniLM 对最近 500 个回复字符的独立文本编码；托管 Codex 接入提供回复文字。本地 HF 模型的内部 J-lens 词汇读出可在 **Live model** 中查看。
 见 [流式接入说明](docs/mood-monitor.md#4-在-codex-回复过程中更新)。
 
 <img src="docs/screenshots/codex-live-vectors.jpg" alt="J7Scope 英文小窗显示 Codex 回复的情绪指数和 MiniLM 语义近邻" width="360">

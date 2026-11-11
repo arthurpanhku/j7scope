@@ -10,16 +10,18 @@
 
 ## 1. Scope
 
-J7Scope connects model readouts and experimental interventions with shareable traces. Bilingual J-space evaluation is its first research application. Researchers can swap model backends, structure adapters, concept vocabularies, and fitting corpora to design their own experiments.
+J7Scope makes experiments on internal LLM representations observable and reproducible. Its first research question is whether Chinese and English contexts for the same concept activate similar J-space directions. The platform supports that test with J-lens readouts, activation patching, and replayable traces. Researchers can swap model backends, structure adapters, concept vocabularies, and fitting corpora.
+
+The [live mood dashboard](#live-mood-dashboard) displays affective vocabulary signals in model replies or J-lens readouts. For tools such as Codex and Claude Code, it analyzes assistant reply text.
 
 | Workflow | Support |
 |---|---|
 | Local models | The Hugging Face (HF) backend loads model weights directly, captures activations, and fits or loads a lens. |
 | Self-hosted cloud models | Run J7Scope and the model on the same compute node, then connect your browser over SSH or HTTPS. |
-| Hosted chat APIs | Internal activation access is required for J-space readouts. The preview ships without a hosted chat backend. |
+| Codex, Claude Code, and other tools | The dashboard can display tone signals from assistant replies. J-lens experiments require access to internal model activations. |
 | Offline sharing | Replay Trace v1 in a browser without loading a model or using a GPU. |
 
-**Research preview.** CPU validation with pretrained SmolLM2-135M weights covers generation, independent activation capture, readout consistency, identity interventions, and trace export. The small set of random probes checks the computation pipeline. Semantic quality and cross-language sharing require separate evaluation. Qwen GPU performance and Docker GPU operation still need verification on deployment hardware. See the [validation record](docs/validation/smollm2-135m-cpu.json).
+**Research preview.** CPU validation with pretrained SmolLM2-135M weights covers generation, independent activation capture, readout consistency, identity interventions, and trace export. The small set of random probes checks the computation pipeline. Semantic quality and cross-language sharing require separate evaluation. The formal Chinese–English experiments with Qwen and GPU deployment validation are still pending. See the [validation record](docs/validation/smollm2-135m-cpu.json) and [roadmap](#9-roadmap).
 
 The service is designed for individual researchers and trusted labs. Session credentials scope events and recordings, and a bounded queue runs model jobs serially. The API supports an OpenAI-style text chat subset. Tool calling, full agent execution, and arbitrary model compatibility fall outside the preview's scope.
 
@@ -79,7 +81,7 @@ To upgrade, add `--upgrade` to your installation command above and run `j7scope 
 
 The static gallery runs without a GPU. J7Scope serves [`apps/site`](apps/site) at `/`, and the same files deploy to GitHub Pages through [the Pages workflow](.github/workflows/pages.yml). Replay recorded traces token by token, link to a specific moment, and export SVG, PNG, JSON, or BibTeX. The screenshots use synthetic traces labelled `DEMO` and run through the same statistical pipeline.
 
-**Compare** aligns Chinese and English sessions for the same narrative. The **Cross-trace rigor** strip shows whether concept overlap at aligned positions exceeds the shuffled-pairing null band. Shared concepts are underlined in both readouts.
+**Compare** aligns Chinese and English sessions for the same narrative. The **Cross-trace rigor** strip compares concept overlap at aligned positions with a baseline made by shuffling position pairs. Shared concepts are underlined in both readouts.
 
 <p align="center"><img src="docs/screenshots/compare.png" width="840" alt="Compare view with cross-trace rigor and aligned Chinese and English sessions" /></p>
 
@@ -95,7 +97,7 @@ python experiments/build_contrast.py trace-a trace-b \
 
 <p align="center"><img src="docs/screenshots/gallery.png" width="840" alt="J-Space Gallery landing page" /></p>
 
-**Replay** steps through a single trace token by token. Each token's **rigor strip** plots cross-language concept overlap against the null band and reports sharedness with a confidence interval. Export from the upper-right corner.
+**Replay** steps through a single trace token by token. Each token's **rigor strip** compares concept overlap between the two vocabulary columns of one readout with a shuffled-pairing baseline and reports sharedness with a confidence interval. Export from the upper-right corner.
 
 <p align="center"><img src="docs/screenshots/replay.png" width="840" alt="Replay with a per-token null band and Chinese and English readouts" /></p>
 
@@ -103,9 +105,9 @@ For definitions of sharedness, the CKA pitfall when `n ≪ d`, and the reason ov
 
 ## 4. Research background
 
-Anthropic's July 2026 paper [*Verbalizable Representations Form a Global Workspace in Language Models*](https://transformer-circuits.pub/2026/workspace/index.html) introduces **J-lens**. It maps an intermediate residual stream into final-layer coordinates using an expected input-output Jacobian, then decodes the result with the model's own unembedding. This exposes concepts the model is inclined to verbalize. The authors report that the readable directions form a sparse subspace called **J-space**, accounting for about 6–10% of activation variance. The subspace has stronger broadcast-like read and write connectivity than random directions, which the authors relate to the global workspace in cognitive science.
+Anthropic's July 2026 paper [*Verbalizable Representations Form a Global Workspace in Language Models*](https://transformer-circuits.pub/2026/workspace/index.html) introduces **J-lens**. It maps an intermediate residual stream into final-layer coordinates using an expected input-output Jacobian, then decodes the result with the model's own unembedding. This exposes concepts the model is inclined to verbalize. The authors call these directions **J-space** and report broadcast-like read and write connectivity in the models they studied. In their activation variance analysis, the sparse J-lens decomposition explained at most 10 percentage points more variance than a random control of the same size. The authors relate these observations to the global workspace in cognitive science.
 
-The lens fitting corpus consists of English web text. The paper also includes multilingual tests and demonstrates that intervening on an English J-lens coordinate can change Chinese output. This project asks how consistently the same concepts occupy similar J-space directions in Chinese and English, where that relationship breaks down, and whether it can inform safety monitoring on open models.
+The paper includes multilingual tests and demonstrates that intervening on English J-lens coordinates can change Chinese output. J7Scope plans to use paired tasks on open-weight models to test the extent and limits of Chinese–English sharing and explore whether readouts help monitor model behaviors that can be labeled.
 
 The upstream [`anthropics/jacobian-lens`](https://github.com/anthropics/jacobian-lens) repository is an Apache-2.0 reference implementation with no active maintenance or contributions. Its public open-model demo focuses on one language. J7Scope focuses on systematic bilingual evaluation and reproducible causal controls for open models.
 
@@ -115,9 +117,9 @@ Do Chinese and English prompts that evoke the same concept, such as deception, m
 
 | | Hypothesis | Interpretation |
 |---|---|---|
-| **H1** | **Language-independent.** Chinese and English prompts activate strongly overlapping directions. | Supports a language-independent conceptual workspace. |
-| **H2** | **Language-specific.** The directions show little overlap. | Suggests that J-space in the tested setup reflects language-specific patterns. |
-| **H3** | **Partially shared.** Abstract concepts such as emotions or intentions overlap more than concrete entities such as people or proper names. | Suggests that cross-language alignment varies by concept type. |
+| **H1** | **Shared across languages.** Chinese and English prompts activate strongly overlapping directions. | Supports shared conceptual representations on the tested tasks. |
+| **H2** | **Language-specific.** Overlap is close to the shuffled-pairing baseline. | Provides limited evidence of sharing in the tested setup. |
+| **H3** | **Partially shared.** Abstract concepts such as emotions or intentions overlap more than concrete entities such as names. | Suggests that sharing varies by concept type. |
 
 ## 6. Methods
 
@@ -135,7 +137,7 @@ Build matched Chinese and English probe prompts for the concept categories explo
 ### 6.3 Analysis sequence
 
 - **M1, correlational analysis.** Use the same `J_l`, the expected input-output Jacobian estimated on a fixed corpus distribution, to read the top-k tokens at matched Chinese and English prompt positions. Compare representation directions with CKA or SVCCA and report top-k overlap. Run a separate ablation with Chinese, English, and mixed fitting corpora.
-- **M2, causal validation.** Once M1 shows a signal, patch the residual stream for a concept such as manipulation from a Chinese context into an English forward pass. Check whether the resulting readout preserves the concept across the change in language. This provides stronger causal evidence than correlation alone.
+- **M2, causal validation.** Once M1 shows a signal, patch residual activations from a Chinese context into an English forward pass and compare the resulting readouts and actual outputs. Whole-residual patches can also carry source language or position information. To attribute an effect to a J-space concept, compare against controls such as no patch and matched random directions and test whether the effect is specific to the intended concept.
 - **M3, comparison by concept type.** Compare cross-language overlap for abstract concepts and concrete entities to test H3.
 
 ### 6.4 Metrics
@@ -189,7 +191,7 @@ from j7scope.fitting import load_model, JLens
 
 model, tok = load_model("Qwen/Qwen2.5-7B-Instruct")
 jlens = JLens(model, tok, layer=18)
-jlens.estimate_jacobian(corpus_prompts)          # Fit once and reuse across languages
+jlens.estimate_jacobian(corpus_prompts)          # Fit on the chosen corpus and reuse across languages
 
 pairs = load_parallel_pairs("data")
 h_zh = jlens.collect_residual(pairs["deception-01"]["zh"]["text"])
@@ -293,24 +295,24 @@ J7Scope is licensed under [Apache-2.0](LICENSE). Its fitting logic builds on the
 | Term | Meaning |
 |---|---|
 | **J-lens** (Jacobian lens) | Uses an expected Jacobian to map an intermediate residual stream into final-layer coordinates, then decodes it using the model's unembedding. |
-| **J-space** | Sparse subspace spanned by the directions that J-lens can read out. The source paper reports that it accounts for about 6–10% of activation variance and relates it to the global workspace. |
+| **J-space** | Representation space spanned by directions that J-lens can read out. The source paper reports that relatively few directions are active above a random baseline at each position. |
 | **Global workspace** | Cognitive science concept in which information is broadcast to a shared space that modules can read from and write to. |
 | **Residual stream** (`h_l`) | Hidden state that accumulates contributions across transformer layers. The residual at layer `l` is the input to J-lens. |
-| **Jacobian** (`J_l`) | Expected derivative of the final-layer residual with respect to the layer-`l` residual. Fit one mapping for the chosen model, layer, and corpus, then reuse it across languages. |
+| **Jacobian** (`J_l`) | Expected derivative of the final-layer residual with respect to the layer-`l` residual, estimated on a chosen corpus. Use the same mapping to compare languages and check how the choice of corpus affects the result. |
 | **Unembedding** (`lm_head`) | Output matrix that projects hidden vectors into vocabulary logits for token decoding. |
 | **Logit lens** | An earlier method that applies the unembedding directly to intermediate states. J-lens first maps the states through the Jacobian. |
 | **Readout** | Top-k tokens or concepts returned by applying J-lens to `h_l` at a given position. |
 | **Concept space / lexicon** | Maps tokens in different languages, such as “欺骗” and “deception,” to a common concept for comparison. |
 | **Sharedness** | Observed overlap normalized against a null baseline and a same-language ceiling, with a confidence interval. |
-| **Shuffled-pairing null** | Chance overlap estimated by shuffling prompt pairs. See [§6.4](#64-metrics). |
+| **Shuffled-pairing null** | Chance overlap estimated by shuffling pairings. Exceeding the band indicates a value above that baseline. Formal research also needs independent samples and controls. See [§6.4](#64-metrics). |
 | **Top-k overlap** | Overlap between two top-k readouts or concept sets. |
 | **CKA / SVCCA** | Representation similarity measures. When sample count is far below dimension, report the scores with their null baselines. |
-| **Activation patching** | Copies activations into another forward pass to test whether the resulting readout follows the concept across languages. |
+| **Activation patching** | Copies activations into another forward pass and uses controls to test how the intervention affects readouts or actual outputs. |
 | **Cloze probe** | Fill-in-the-blank prompt with a readout at its final token position. |
 | **Trace / Replay / Compare** | A citable session recording, a token-by-token player, and a side-by-side view of aligned traces. |
 | **Intra-token and cross-trace rigor** | Intra-token metrics compare Chinese and English within one readout. Cross-trace metrics compare matched positions in two separately prompted language sessions. |
 | **Sidecar** | OpenAI-compatible proxy that sits between an agent harness and an open model and streams J-space readouts alongside model responses. |
-| **H1 / H2 / H3** | Language-independent, language-specific, and partially shared directions, respectively. |
+| **H1 / H2 / H3** | Three patterns to test: sharing across languages, language specificity, and partial sharing by concept type. |
 | **Dense transformer / MoE** | Dense models simplify Jacobian computation and are the project's first choice. MoE stands for mixture of experts. |
 
 ## 12. References and further reading
@@ -348,7 +350,7 @@ See the Gallery's [Methodology](https://arthurpanhku.me/j7scope/method.html) for
 
 ## Live mood dashboard
 
-Install from the current repository checkout with `pip install -e .` for the dashboard and tool integrations. Open `/mood.html` on the J7Scope server to analyze input text, subscribe to live model output or J-lens readouts, or try a synthetic demo. The dashboard shows the tone signal as an emoji, score, and recent trend. Scores come from keyword rules and describe signals in the text or readout.
+Install from the current repository checkout with `pip install -e .` for the dashboard and tool integrations. Open `/mood.html` on the J7Scope server to analyze input text, subscribe to live model output or J-lens readouts, or try a synthetic demo. The dashboard shows the tone signal as an emoji, score, and recent trend. Scores describe keyword signals and have yet to be validated as emotion classifications. Use text input or the synthetic demo to try the interface. To observe model replies, select **Live model** or **Agent tools**.
 
 Select **Compact window** to place a compact view beside your editor. It can update at the end of a turn from Codex, Claude Code, or OpenCode V1 and receive HTTP updates from other tools. Both views have a Chinese and English switch. Use `?lang=en` for the English dashboard or `?mode=tools&view=compact&lang=en` for the English window. See the [setup and integration guide](docs/mood-monitor.md).
 
@@ -370,6 +372,6 @@ Run `j7scope-codex-live` to start a dedicated Codex conversation. Type in the te
 j7scope-codex-live --session-key-file /path/to/session-key
 ```
 
-Start the J7Scope service with `--mood-embeddings` to enable **Vector-space words**. The local MiniLM encoder embeds the latest 500 characters of the reply and selects six nearest words from a fixed English vocabulary. With a local HF model, you can view its internal J-lens readouts in **Live model**. See the [streaming integration guide](docs/mood-monitor.md#4-在-codex-回复过程中更新).
+Start the J7Scope service with `--mood-embeddings` to enable **Vector-space words**. This requires the `[hf]` dependencies and a cached MiniLM model. The hosted Codex integration supplies reply text. The independent local MiniLM encoder uses the latest 500 characters to select six nearest words from a fixed English vocabulary. With a local HF model, you can view its internal J-lens readouts in **Live model**. See the [streaming integration guide](docs/mood-monitor.md#4-在-codex-回复过程中更新).
 
 <img src="docs/screenshots/codex-live-vectors.jpg" alt="English J7Scope window showing a Codex reply's tone score and six MiniLM neighbors" width="360">
