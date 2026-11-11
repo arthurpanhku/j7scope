@@ -57,7 +57,7 @@ class SidecarServer(ThreadingHTTPServer):
                  traces_dir=None, api_key=None, allowed_origins=(), max_queue=4,
                  queue_timeout=30, request_timeout=120, max_body=262144,
                  max_tokens=512, max_viewers=16, secure_cookie=False,
-                 session_ttl=86400, max_connections=64, lexicon_file=None):
+                 session_ttl=86400, max_connections=64, lexicon_file=None, mood_embeddings=None):
         if addr[0] not in ("127.0.0.1", "localhost", "::1") and not api_key:
             raise ValueError("Remote binding requires J7SCOPE_API_KEY (at least 32 characters)")
         if api_key and (len(api_key) < 32 or not api_key.isascii()):
@@ -74,6 +74,7 @@ class SidecarServer(ThreadingHTTPServer):
         self.connections = threading.BoundedSemaphore(max_connections)
         self.secure_cookie = secure_cookie
         self.backend = backend
+        self.mood_embeddings = mood_embeddings
         self.bus = ReadoutBus()
         self.per_lang = per_lang
         self.token_delay = token_delay
@@ -392,12 +393,20 @@ class _Handler(BaseHTTPRequestHandler):
             text.encode("utf-8")
         except UnicodeError:
             raise RequestError("text must be valid Unicode") from None
-        if phase not in ("update", "complete"):
-            raise RequestError("phase must be update or complete")
-        self.bus.publish({
+        if phase not in ("update", "complete", "interrupted"):
+            raise RequestError("phase must be update, complete or interrupted")
+        event = {
             "type": "mood_update", "id": uuid.uuid4().hex, "ts": time.time(),
             "source": source, "text": text, "phase": phase,
-        }, session=self.principal.session)
+        }
+        encoder = self.server.mood_embeddings
+        if encoder is not None:
+            try:
+                event["neighbors"] = encoder.neighbors(text)
+                event["embedding_model"] = encoder.model_name
+            except Exception:
+                _LOG.warning("Mood text embedding failed", exc_info=True)
+        self.bus.publish(event, session=self.principal.session)
         return self._json({"accepted": True}, 202)
 
     def _chat_completions(self) -> None:

@@ -953,6 +953,26 @@ footer details p {
 .compact .observed-text {
   max-height: 70px;
 }
+.vector-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.vector-words li {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 7px;
+  overflow-wrap: anywhere;
+}
+.vector-words small {
+  margin-left: 5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 @media (max-width: 480px) {
   .site-head nav {
     align-items: center;

@@ -416,3 +416,20 @@ Ordinary chat APIs cannot substitute for internal activation access. See
 下图是集成小窗收到一条 Claude Code 格式的测试回复后的状态：
 
 <img src="docs/screenshots/mood-window.jpg" alt="J7Scope 集成小窗：Claude Code 回复的情绪信号" width="360">
+
+#### Codex 流式对话与向量词汇
+
+运行 `j7scope-codex-live` 开始一场独立的 Codex 对话。在终端输入消息，
+小窗的 **Agent tools** 会随着回复生成更新情绪指数和命中的词。
+普通 Codex 桌面聊天通过已配置的钩子在回合结束时更新。
+
+```bash
+j7scope-codex-live --session-key-file /path/to/session-key
+```
+
+启动 J7Scope 服务时加上 `--mood-embeddings`，小窗会同时显示 **Vector-space words**。
+这六个词是本机 MiniLM 根据最近 500 个字符计算出的语义近邻。
+本地 HF 模型的 J-lens 词汇读出可在 **Live model** 中查看。
+见 [流式接入说明](docs/mood-monitor.md#4-在-codex-回复过程中更新)。
+
+<img src="docs/screenshots/codex-live-vectors.jpg" alt="J7Scope 英文小窗显示 Codex 回复的情绪指数和 MiniLM 语义近邻" width="360">
