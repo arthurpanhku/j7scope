@@ -8,6 +8,11 @@ import json
 import os
 import sys
 
+if __package__:
+    from .mood_local import matches_receiver, project_receiver
+else:
+    from mood_local import matches_receiver, project_receiver
+
 MAX_INPUT = 2_000_000
 HOOK_SOURCES = {"codex": "Codex", "claude": "Claude Code"}
 
@@ -25,10 +30,12 @@ def message_from_input(mode: str, raw: bytes) -> str:
     return message.strip()[-500:].strip() if isinstance(message, str) else ""
 
 
-def send_update(port: int, key: str, *, source: str, text: str, phase: str) -> bool:
+def send_update(port: int, key: str, *, source: str, text: str, phase: str, instance: str | None = None) -> bool:
     # A literal loopback address and HTTPConnection avoid proxies and redirects.
     connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
     try:
+        if instance and not matches_receiver(connection, instance):
+            return False
         connection.request("POST", "/mood/events",
                            json.dumps({"source": source, "text": text, "phase": phase}),
                            {"Content-Type": "application/json", "Authorization": f"Bearer {key}"})
@@ -47,12 +54,22 @@ def main(argv=None) -> int:
     is_hook = args.mode in HOOK_SOURCES
     accepted = False
     try:
-        text = message_from_input(args.mode, sys.stdin.buffer.read(MAX_INPUT + 1))
-        key = os.environ.get("J7SCOPE_MOOD_SESSION_KEY", "")
-        port = int(os.environ.get("J7SCOPE_MOOD_PORT", "8799"))
+        raw = sys.stdin.buffer.read(MAX_INPUT + 1)
+        text = message_from_input(args.mode, raw)
+        receiver = None
+        if is_hook and text:
+            cwd = json.loads(raw).get("cwd")
+            if isinstance(cwd, str):
+                receiver = project_receiver(cwd)
+        if receiver:
+            key, port, instance = receiver.key, receiver.port, receiver.instance
+        else:
+            key = os.environ.get("J7SCOPE_MOOD_SESSION_KEY", "")
+            port = int(os.environ.get("J7SCOPE_MOOD_PORT", "8799"))
+            instance = None
         if key and text and 1 <= port <= 65535:
             accepted = send_update(port, key, source=HOOK_SOURCES.get(args.mode, args.source),
-                                   text=text, phase="complete" if is_hook else args.phase)
+                                   text=text, phase="complete" if is_hook else args.phase, instance=instance)
     except (ValueError, UnicodeError, RecursionError, OSError, http.client.HTTPException):
         pass
     if is_hook:

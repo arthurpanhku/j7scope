@@ -27,7 +27,7 @@ class Credentials:
         now = time.monotonic()
         self._tokens = {k: v for k, v in self._tokens.items() if v[1] > now}
 
-    def resolve(self, token):
+    def resolve(self, token, *, consume=False):
         if not self.api_key:
             return Principal("local", True)
         if token and hmac.compare_digest(token.encode(), self.api_key.encode()):
@@ -37,7 +37,7 @@ class Credentials:
         key = hashlib.sha256(token.encode()).hexdigest()
         with self._lock:
             self._prune()
-            item = self._tokens.get(key)
+            item = self._tokens.pop(key, None) if consume else self._tokens.get(key)
             return item[0] if item else None
 
     def issue(self, principal=None):

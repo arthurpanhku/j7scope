@@ -21,6 +21,7 @@ import logging
 import math
 from queue import Empty
 import re
+import secrets
 import threading
 from http.cookies import SimpleCookie
 from urllib.parse import urlsplit
@@ -57,13 +58,19 @@ class SidecarServer(ThreadingHTTPServer):
                  traces_dir=None, api_key=None, allowed_origins=(), max_queue=4,
                  queue_timeout=30, request_timeout=120, max_body=262144,
                  max_tokens=512, max_viewers=16, secure_cookie=False,
-                 session_ttl=86400, max_connections=64, lexicon_file=None, mood_embeddings=None):
+                 session_ttl=86400, max_connections=64, lexicon_file=None, mood_embeddings=None,
+                 local_mood_id=None):
+        if local_mood_id and (addr[0] != "127.0.0.1" or not api_key):
+            raise ValueError("Local mood pairing requires an authenticated loopback service")
         if addr[0] not in ("127.0.0.1", "localhost", "::1") and not api_key:
             raise ValueError("Remote binding requires J7SCOPE_API_KEY (at least 32 characters)")
         if api_key and (len(api_key) < 32 or not api_key.isascii()):
             raise ValueError("API key must contain at least 32 ASCII characters")
         super().__init__(addr, _Handler)
         self.credentials = Credentials(api_key, ttl=session_ttl)
+        self.local_mood_id = local_mood_id
+        self.mood_tickets = Credentials(secrets.token_urlsafe(32), ttl=60) if local_mood_id else None
+        self.cookie_name = f"j7scope_mood_{self.server_port}" if local_mood_id else "j7scope_session"
         self.allowed_origins = set(allowed_origins)
         self.gate = TaskGate(max_queue, queue_timeout)
         self.request_timeout = request_timeout
@@ -165,7 +172,7 @@ class _Handler(BaseHTTPRequestHandler):
         cookie = SimpleCookie()
         try:
             cookie.load(self.headers.get("Cookie", ""))
-            return cookie["j7scope_session"].value if "j7scope_session" in cookie else ""
+            return cookie[self.server.cookie_name].value if self.server.cookie_name in cookie else ""
         except Exception:
             return ""
 
@@ -242,7 +249,10 @@ class _Handler(BaseHTTPRequestHandler):
     def do_GET(self):  # noqa: N802
         path = urlsplit(self.path).path
         if path == "/health":
-            return self._json({"ok": True, "service": "j7scope"})
+            health = {"ok": True, "service": "j7scope"}
+            if self.server.local_mood_id:
+                health["local_mood_id"] = self.server.local_mood_id
+            return self._json(health)
         protected = path in ("/ready", "/v1/models", "/jspace/stream", "/jspace/session") or path.startswith("/traces/")
         if protected and not self._authorize():
             return
@@ -271,22 +281,31 @@ class _Handler(BaseHTTPRequestHandler):
         return self._serve_static(SITE_DIR, rel)
 
     def do_POST(self):  # noqa: N802
-        if not self._authorize():
-            return
         path = urlsplit(self.path).path
+        redeem = path == "/mood/pair/redeem" and self.server.mood_tickets is not None
+        if not redeem and not self._authorize():
+            return
         try:
+            if redeem:
+                return self._redeem_mood_ticket()
+            if path == "/mood/pair" and self.server.mood_tickets is not None:
+                if self.principal.operator or not self.headers.get("Authorization", "").startswith("Bearer "):
+                    raise RequestError("pairing requires a dedicated session bearer key", 403)
+                if self.headers.get("Content-Length", "0") != "0":
+                    self._read_body()
+                try:
+                    ticket, _ = self.server.mood_tickets.issue(self.principal)
+                except ValueError as exc:
+                    raise RequestError(str(exc), 429) from exc
+                return self._json({"ticket": ticket}, 201)
             if path in ("/auth/login", "/auth/logout", "/jspace/sessions"):
                 if self.headers.get("Content-Length", "0") != "0":
                     self._read_body()
             if path == "/auth/login":
-                token, principal = self.server.credentials.issue(self.principal)
-                cookie = f"j7scope_session={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={self.server.credentials.ttl}"
-                if self.server.secure_cookie:
-                    cookie += "; Secure"
-                return self._json({"session_id": principal.session}, headers={"Set-Cookie": cookie})
+                return self._login(self.principal)
             if path == "/auth/logout":
                 self.server.credentials.revoke(self._token())
-                return self._json({"ok": True}, headers={"Set-Cookie": "j7scope_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0"})
+                return self._json({"ok": True}, headers={"Set-Cookie": f"{self.server.cookie_name}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0"})
             if path == "/jspace/sessions":
                 if not self.principal.operator:
                     return self._json({"error": "operator credential required"}, 403)
@@ -375,6 +394,27 @@ class _Handler(BaseHTTPRequestHandler):
             pass
         finally:
             self.bus.unsubscribe(sub_id)
+
+    def _login(self, principal):
+        token, principal = self.server.credentials.issue(principal)
+        cookie = f"{self.server.cookie_name}={token}; HttpOnly; SameSite=Strict; Path=/; Max-Age={self.server.credentials.ttl}"
+        if self.server.secure_cookie:
+            cookie += "; Secure"
+        return self._json({"session_id": principal.session}, headers={"Set-Cookie": cookie})
+
+    def _redeem_mood_ticket(self):
+        host = f"127.0.0.1:{self.server.server_port}"
+        if self.headers.get("Host") != host or self.headers.get("Origin") != f"http://{host}":
+            raise RequestError("pairing requires the local dashboard origin", 403)
+        ticket = self._read_body().get("ticket")
+        if not isinstance(ticket, str) or len(ticket) != 43 or not ticket.isascii():
+            raise RequestError("invalid pairing ticket", 401)
+        principal = self.server.mood_tickets.resolve(ticket, consume=True)
+        if principal is None or principal.operator:
+            raise RequestError("pairing ticket expired or already used", 401)
+        if self.server.credentials.resolve(self._token()) == principal:
+            return self._json({"session_id": principal.session})
+        return self._login(principal)
 
     def _receive_mood_event(self) -> None:
         if (not self.server.credentials.api_key or self.principal.operator

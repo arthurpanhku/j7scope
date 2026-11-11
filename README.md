@@ -410,8 +410,7 @@ Ordinary chat APIs cannot substitute for internal activation access. See
 完整看板和小窗均可在右上角切换中英文，也可在 URL 加 `lang=en` 直接打开英文版。
 指数衡量关键词信号，尚未经过情绪分类验证。输入和合成演示可用于体验界面；观察模型回复时请选择 **实时模型** 或 **工具集成**。见 [启动与工具集成说明](docs/mood-monitor.md)。
 
-在要接入的项目中，使用 `j7scope-integrate` 预览自动发现的 Agent 和配置路径；
-加 `--apply` 写入项目级配置，保留已有钩子。也可用 `--agent` 指定工具。
+在目标项目中运行 `j7scope-integrate --apply --open`，自动配置 Codex 和 Claude Code、启动本地接收服务并打开已配对的英文小窗。Codex 需要在应用内审阅钩子。OpenCode V1 和自定义服务可用[手动接入流程](docs/mood-monitor.md#1-创建专用会话)。
 
 ![J7Scope 心情看板：文字输入、情绪指数与近期趋势](docs/screenshots/mood-dashboard.jpg)
 

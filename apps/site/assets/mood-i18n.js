@@ -33,6 +33,8 @@
     "文字输入": "Text input",
     "实时模型": "Live model",
     "工具集成": "Agent tools",
+    "正在连接本地小窗…": "Pairing the local dashboard…",
+    "配对失败，请重新运行接入命令。": "Pairing failed. Run the integration command again.",
     "体验演示": "Demo",
     "写下此刻的一句话": "Write a sentence",
     "比如：今天的事情很顺利，我很开心。": "For example: Things went well today. I feel happy.",

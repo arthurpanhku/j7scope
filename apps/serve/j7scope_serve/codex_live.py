@@ -13,6 +13,7 @@ import sys
 import time
 
 from .mood_bridge import send_update
+from .mood_local import project_receiver
 
 
 class AppServer:
@@ -105,6 +106,11 @@ def main(argv=None):
         if args.session_key_file:
             key = args.session_key_file.read_text(encoding="utf-8").strip()
         port = int(os.environ.get("J7SCOPE_MOOD_PORT", "8799"))
+        instance = None
+        if not key and not args.session_key_file:
+            receiver = project_receiver(os.getcwd())
+            if receiver:
+                key, port, instance = receiver.key, receiver.port, receiver.instance
         if not key or not 1 <= port <= 65535:
             raise ValueError("provide a J7Scope session key and a valid local port")
         failed = False
@@ -112,8 +118,8 @@ def main(argv=None):
         def publish(text, phase):
             nonlocal failed
             try:
-                accepted = send_update(port, key, source="Codex", text=text.strip(), phase=phase)
-            except (OSError, http.client.HTTPException):
+                accepted = send_update(port, key, source="Codex", text=text.strip(), phase=phase, instance=instance)
+            except (OSError, ValueError, http.client.HTTPException):
                 accepted = False
             if not accepted and not failed:
                 print("\nDashboard update failed. Check the local service and session key.", file=sys.stderr)
