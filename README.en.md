@@ -354,7 +354,7 @@ Install from the current repository checkout with `pip install -e .` for the das
 
 Select **Compact window** to place a compact view beside your editor. It can update at the end of a turn from Codex, Claude Code, or OpenCode V1 and receive HTTP updates from other tools. Both views have a Chinese and English switch. Use `?lang=en` for the English dashboard or `?mode=tools&view=compact&lang=en` for the English window. See the [setup and integration guide](docs/mood-monitor.md).
 
-From the project you want to connect, run `j7scope-integrate` to preview the detected agents and configuration paths. Add `--apply` to write project-level configuration while preserving existing hooks, or use `--agent` to select tools explicitly.
+From the project you want to connect, run `j7scope-integrate --apply --open` to configure Codex and Claude Code, start a local receiver, and open the paired English compact window. Review the hook inside Codex when prompted. OpenCode V1 and custom servers use the [manual setup](docs/mood-monitor.md#1-创建专用会话).
 
 ![English J7Scope mood dashboard showing text input, a tone score, and the recent trend](docs/screenshots/mood-dashboard-en.jpg)
 

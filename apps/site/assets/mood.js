@@ -273,7 +273,7 @@
     };
   }
 
-  function setMode(next) {
+  function setMode(next, options) {
     modeVersion++;
     if (events) events.close();
     if (timer) clearInterval(timer);
@@ -316,7 +316,7 @@
       message("tool-status", "等待 Codex、Claude Code、OpenCode 或其他工具推送文字。");
       analyze(false);
       unknown("工具发来新文字后，这里会即时更新。");
-      openLive();
+      if (!options?.skipConnect) openLive();
     } else {
       analyze(false);
       unknown("连接后等待模型生成，不会使用其他来源的结果。");
@@ -415,5 +415,24 @@
   $("open-window").hidden = !compact;
   $("full-dashboard").hidden = !compact;
   var initial = query.get("mode");
-  setMode(["text", "live", "tools", "demo"].includes(initial) ? initial : compact ? "tools" : "text");
+  var initialMode = ["text", "live", "tools", "demo"].includes(initial) ? initial : compact ? "tools" : "text";
+  var ticket = new URLSearchParams(window.location.hash.slice(1)).get("pair");
+  if (!ticket || initialMode !== "tools") {
+    setMode(initialMode);
+    return;
+  }
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  setMode(initialMode, { skipConnect: true });
+  connection("正在连接本地小窗…", "waiting");
+  var pairingMode = modeVersion;
+  fetch("mood/pair/redeem", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ticket: ticket }),
+  }).then(function (response) {
+    if (!response.ok) throw new Error("pairing failed");
+    if (pairingMode === modeVersion) openLive();
+  }).catch(function () {
+    if (pairingMode !== modeVersion) return;
+    connection("配对失败，请重新运行接入命令。", "waiting");
+  });
 })();

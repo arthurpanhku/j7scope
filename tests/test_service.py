@@ -306,3 +306,71 @@ def test_generation_and_intervention_share_admission():
         release.set()
         first.join(3)
         assert request(server, "POST", "/jspace/interventions", intervention)[0] == 200
+
+
+def test_local_pairing_uses_single_use_ticket_and_scoped_cookie(tmp_path, monkeypatch):
+    import secrets
+    import shlex
+
+    from j7scope_serve import mood_bridge, mood_integrate, mood_local
+
+    state_dir = tmp_path / "state"
+    state_dir.mkdir(mode=0o700)
+    project = tmp_path / "project"
+    project.mkdir()
+    monkeypatch.setenv("J7SCOPE_MOOD_STATE_DIR", str(state_dir))
+    monkeypatch.delenv("J7SCOPE_MOOD_SESSION_KEY", raising=False)
+    monkeypatch.delenv("J7SCOPE_MOOD_PORT", raising=False)
+    opened = []
+    monkeypatch.setattr(mood_local.webbrowser, "open", lambda url: opened.append(url) or True)
+
+    instance = secrets.token_urlsafe(32)
+    with running(api_key=KEY, local_mood_id=instance) as server:
+        key, principal = server.credentials.issue()
+
+        def start(path):
+            receiver = mood_local.Receiver(server.server_port, instance, key)
+            path.write_text(json.dumps([receiver.port, instance, key]))
+            path.chmod(0o600)
+            return receiver, receiver.ticket()
+
+        monkeypatch.setattr(mood_local, "_start", start)
+        args = ["--project", str(project), "--agent", "codex", "--agent", "claude", "--apply", "--open"]
+        assert mood_integrate.main(args) == 0
+        monkeypatch.setattr(mood_local, "_start", lambda _: pytest.fail("receiver should be reused"))
+        assert mood_integrate.main(args) == 0
+        origin = f"http://127.0.0.1:{server.server_port}"
+        prefix = origin + "/mood.html?mode=tools&view=compact&lang=en#pair="
+        assert len(opened) == 2 and all(url.startswith(prefix) and key not in url for url in opened)
+        body = {"ticket": opened[-1].removeprefix(prefix)}
+        path = "/mood/pair/redeem"
+        assert request(server, "POST", path, body, headers={"Origin": "https://example.com"})[0] == 403
+        assert request(server, "POST", path, body, headers={"Origin": origin, "Host": "example.com"})[0] == 403
+        status, headers, payload = request(server, "POST", path, body, headers={"Origin": origin})
+        assert status == 200
+        assert json.loads(payload)["session_id"] == principal.session
+        assert "HttpOnly" in headers["Set-Cookie"] and "SameSite=Strict" in headers["Set-Cookie"]
+        cookie = headers["Set-Cookie"].split(";", 1)[0]
+        assert cookie.startswith(f"j7scope_mood_{server.server_port}=")
+        assert request(server, "POST", path, body, headers={"Origin": origin})[0] == 401
+        assert request(server, "POST", "/mood/pair", headers={"Cookie": cookie})[0] == 403
+        assert request(server, "GET", "/jspace/session", headers={"Cookie": cookie})[0] == 200
+
+        sub, events = server.bus.subscribe(session=principal.session)
+        try:
+            assert not mood_bridge.send_update(
+                server.server_port, key, source="Codex", text="not sent", phase="complete",
+                instance=secrets.token_urlsafe(32),
+            )
+            assert events.empty()
+            for agent, expected in (("codex", "Codex"), ("claude", "Claude Code")):
+                config = json.loads((project / mood_integrate.TARGETS[agent]).read_text())
+                command = config["hooks"]["Stop"][0]["hooks"][0]["command"]
+                assert key not in command
+                payload = {"cwd": str(project), "hook_event_name": "Stop", "last_assistant_message": "happy"}
+                subprocess.run(shlex.split(command), input=json.dumps(payload), text=True,
+                               check=True, capture_output=True, timeout=4)
+                event = events.get(timeout=2)
+                assert (event["source"], event["text"], event["phase"]) == (expected, "happy", "complete")
+        finally:
+            server.bus.unsubscribe(sub)

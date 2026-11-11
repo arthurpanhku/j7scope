@@ -140,13 +140,22 @@ def main(argv=None) -> int:
     parser.add_argument("--project", type=Path, default=Path.cwd(), help="project folder (defaults to current checkout)")
     parser.add_argument("--agent", choices=TARGETS, action="append", help="override detection; repeat for multiple tools")
     parser.add_argument("--apply", action="store_true", help="write changes; without this flag, only show the plan")
+    parser.add_argument("--open", action="store_true", help="start and open the paired local dashboard")
     parser.add_argument("--remove", action="store_true", help="remove unchanged J7Scope entries")
     args = parser.parse_args(argv)
+    if args.open and (not args.apply or args.remove):
+        parser.error("--open requires --apply and cannot be combined with --remove")
+    if args.open and args.agent and "opencode" in args.agent:
+        parser.error("--open currently supports Codex and Claude Code")
     if sys.platform == "win32":
         parser.error("automatic command configuration currently supports macOS and Linux")
     try:
         root = project_root(args.project)
         agents = list(dict.fromkeys(args.agent or discover(root)))
+        if args.open:
+            agents = [agent for agent in agents if agent in ("codex", "claude")]
+            if not agents:
+                raise ValueError("no supported agent for --open; select --agent codex or --agent claude")
         if not agents:
             print("No supported agent found. Use --agent codex, claude, or opencode to select one.")
             return 0
@@ -158,6 +167,16 @@ def main(argv=None) -> int:
                 apply_change(path, before, after)
         if not args.apply:
             print("Preview only. Add --apply to change project files.")
+        elif args.open:
+            from .mood_local import open_dashboard
+
+            if not open_dashboard(root):
+                raise ValueError("could not open a browser; set a default browser and rerun setup")
+            print("English dashboard opened. Send a message in an integrated agent to verify the connection.")
+            if "codex" in agents:
+                print("Review Codex hooks in Settings > Hooks or with /hooks in the CLI.")
+            if "claude" in agents:
+                print("Open or restart Claude Code in this project to load the hook.")
         elif not args.remove:
             print("Restart the agents with J7SCOPE_MOOD_SESSION_KEY set. Review Codex hooks with /hooks.")
         return 0
