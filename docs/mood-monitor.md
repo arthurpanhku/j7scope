@@ -112,6 +112,27 @@ OpenCode V1 在 `session.idle` 时用 SDK 读取该轮对应的助手消息，�
 窗口会立即显示每次推送；内置的 Agent 适配器在回合结束时更新。
 外部工具模式基于输出文字，只有直接通过 J7Scope 模型服务生成时才有逐 token 的 J-lens 读出。
 
+### 4. 在 Codex 回复过程中更新
+
+用 `j7scope-codex-live` 开一个独立的 Codex App Server 对话。打开小窗的 **Agent tools**，
+在运行命令的终端输入消息。小窗随助手回复的文字片段更新，回合结束时显示完成状态。
+普通 Codex 桌面聊天仍使用已配置的回合结束钩子。
+
+```bash
+j7scope-codex-live --session-key-file "/path/to/session-key"
+```
+
+也可通过 `J7SCOPE_MOOD_SESSION_KEY` 提供专用密钥，从源码运行时用
+`PYTHONPATH=apps/serve python3 -m j7scope_serve.codex_live`。
+如本机 Codex 默认模型不可用，用 `--model` 为这次对话选择可用模型。
+流式入口使用 Codex 的只读沙盒，支持连续多轮，空行退出。
+
+服务启动时加 `--mood-embeddings` 可在 **Vector-space words** 区域显示近邻词。
+此选项需要安装 HF 依赖，并在本机缓存 `sentence-transformers/all-MiniLM-L6-v2`。
+服务用 MiniLM 编码最近 500 个字符，再按余弦相似度从固定英文词表选出六个近邻。
+此分数来自独立的文字编码器。托管 Codex 的流式接口提供回复文字，本地 HF 模型则可以在 **Live model** 中显示 J-lens top-k。
+见 [Codex App Server 流式事件](https://learn.chatgpt.com/docs/app-server#streaming-notifications)。
+
 ## 显示与判断规则
 
 表情和配色分别表示“好心情”“坏心情”“心情有点复杂”“等待信号”。

@@ -19,6 +19,7 @@ j7scope = "j7scope_serve.__main__:main"
 j7scope-serve = "j7scope_serve.__main__:main"
 j7scope-validate = "j7scope_serve.validation:main"
 j7scope-integrate = "j7scope_serve.mood_integrate:main"
+j7scope-codex-live = "j7scope_serve.codex_live:main"
 
 [project.entry-points."j7scope.backends"]
 hf = "j7scope_serve.backends:HFBackend"
