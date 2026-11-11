@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="即时查看文字和模型实时读出中的正负情绪信号。">
+  <title>J7Scope · 心情实时看板</title>
+  <link rel="stylesheet" href="assets/mood.css">
+  <script defer src="assets/mood-signal.js"></script>
+  <script defer src="assets/mood-i18n.js"></script>
+  <script defer src="assets/mood.js"></script>
+</head>
+<body>
+  <header class="site-head">
+    <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">J7</span> J7Scope <span class="brand-divider">/</span> <span class="brand-page">Mood</span></a>
+    <nav aria-label="主导航"><a href="./">实验回放</a><a href="live.html">实时读出 ↗</a><a id="compact-view" href="mood.html?mode=tools&amp;view=compact">集成小窗 ↗</a><a id="open-window" href="mood.html?mode=tools&amp;view=compact" target="_blank" rel="noopener" hidden>另开窗口 ↗</a><a id="full-dashboard" href="mood.html?mode=tools" hidden>完整看板 ↗</a><button type="button" id="language-switch" aria-label="Switch to English">EN</button></nav>
+  </header>
+  <main>
+    <section class="intro">
+      <div><p class="eyebrow">A LITTLE WINDOW INTO THE NOW</p><h1>此刻，心情怎么样？</h1><p class="intro-note">让文字里的情绪，变得一目了然。</p></div>
+      <span class="connection" id="connection"><i aria-hidden="true"></i><span id="connection-text">本地即时分析</span></span>
+    </section>
+
+    <div class="workspace">
+      <section class="mood-panel" id="mood-panel" data-mood="unknown" aria-labelledby="state-label">
+        <div class="panel-top"><span class="eyebrow">CURRENT MOOD</span><span class="source-tag" id="source-tag">文字输入</span></div>
+        <div class="mood-orbit" aria-hidden="true"><div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div>
+          <svg class="mood-face" viewBox="0 0 160 160"><circle class="face-fill" cx="80" cy="80" r="72"/><circle class="eye" cx="56" cy="67" r="5"/><circle class="eye" cx="104" cy="67" r="5"/><path id="face-mouth" d="M 57 100 L 103 100" fill="none" stroke-width="6" stroke-linecap="round"/></svg>
+          <span class="orbit-star star-one">✦</span><span class="orbit-star star-two">+</span>
+        </div>
+        <div class="mood-result" role="status" aria-live="polite" aria-atomic="true"><p class="state-kicker" id="state-kicker">等一句话，感受一下</p><h2 id="state-label">等待信号</h2><p id="state-detail">输入文字后，这里会即时更新。</p></div>
+        <div class="valence"><div class="valence-labels"><span>坏心情</span><span class="index-label" id="index-label">情绪指数 —</span><span>好心情</span></div><div class="valence-track"><span class="valence-middle"></span><span class="valence-marker" id="valence-marker" hidden></span></div><div class="valence-foot"><span>NEGATIVE</span><span>POSITIVE</span></div></div>
+        <p class="signal-note" id="signal-note">根据文字中的情绪关键词判断，不代表真实心理状态。</p>
+      </section>
+
+      <section class="input-panel" aria-labelledby="input-heading">
+        <div class="section-heading"><h2 id="input-heading">给心情一个入口</h2><span class="tiny-label">INPUT SOURCE</span></div>
+        <div class="source-tabs" role="group" aria-label="信号来源"><button type="button" class="source-tab active" data-mode="text" aria-pressed="true">文字输入</button><button type="button" class="source-tab" data-mode="live" aria-pressed="false">实时模型</button><button type="button" class="source-tab" data-mode="tools" aria-pressed="false">工具集成</button><button type="button" class="source-tab" data-mode="demo" aria-pressed="false">体验演示</button></div>
+
+        <div id="text-controls">
+          <label class="field-label" for="mood-input">写下此刻的一句话</label><textarea id="mood-input" maxlength="2000" placeholder="比如：今天的事情很顺利，我很开心。" rows="5"></textarea>
+          <div class="input-foot"><span>仅在浏览器内分析，不上传</span><span id="char-count">0 / 2000</span></div>
+          <div class="examples"><span>试一句</span><button type="button" data-example="今天的事情很顺利，我很开心，也很期待明天！" data-example-en="Things went well today. I feel happy and hopeful about tomorrow!">☀ 开心的一天</button><button type="button" data-example="今天有点难过，觉得很疲惫，也有些失望。" data-example-en="I feel sad, tired and a little disappointed today.">☁ 有点低落</button></div>
+        </div>
+
+        <div id="live-controls" hidden>
+          <div class="live-meta"><span id="model-label">等待连接模型…</span><span id="layer-label">L —</span></div>
+          <label class="field-label" for="live-basis">分析依据</label><select id="live-basis"><option value="text">模型输出文字 · 最近 500 字符</option><option value="readout">J-lens 词汇读出 · 探索性</option></select>
+          <form id="prompt-form"><label class="field-label" for="live-prompt">发送消息，观察实时变化</label><div class="prompt-row"><input id="live-prompt" maxlength="1000" required placeholder="请用一句话描述开心的一天。"><button id="send-prompt" type="submit" disabled aria-label="发送消息">发送 ↗</button></div></form>
+          <p class="help-text" id="live-status" role="status">连接当前服务的实时事件流…</p>
+          <a class="connect-link" href="connect.html">需要认证？连接会话 →</a>
+        </div>
+
+        <div id="demo-controls" hidden><div class="demo-banner"><span>DEMO</span>合成示例，展示界面效果</div><p class="demo-explanation">跟着几段不同的心情，看看表情、指数和趋势如何一起变化。</p><button class="demo-toggle" id="demo-toggle" type="button">暂停演示 Ⅱ</button></div>
+
+        <div id="tools-controls" hidden>
+          <div class="live-meta"><span id="tool-label">尚无工具更新</span></div>
+          <p class="help-text" id="tool-status" role="status">等待 Codex、Claude Code、OpenCode 或其他工具推送文字。</p>
+          <a class="connect-link" href="connect.html">连接专用会话 →</a>
+        </div>
+
+        <div class="evidence-section"><div class="section-heading"><h3>看到了哪些信号</h3><span class="tiny-label" id="evidence-count">0 个关键词</span></div><div class="evidence" id="evidence"><span class="empty-hint">还没有可判断的情绪词。</span></div></div>
+        <div class="observed-section"><div class="section-heading"><h3 id="observed-heading">正在观察的文字</h3><span class="tiny-label" id="update-time">尚未更新</span></div><p class="observed-text" id="observed-text">你的文字会出现在这里。</p></div>
+      </section>
+    </div>
+
+    <section class="history-panel" aria-label="心情变化趋势"><div class="history-heading"><div><p class="eyebrow">THE LITTLE UPS AND DOWNS</p><h2>心情的起伏</h2></div><span class="history-caption">最近 32 次更新 · 当前来源</span><button id="reset" type="button">清空记录 ↺</button></div><div class="history-chart" id="history-chart" role="img" aria-label="暂无情绪变化记录"><div class="history-baseline"></div><div class="history-bars" id="history-bars"></div><span class="history-empty" id="history-empty">有了信号，就会留下轨迹。</span></div><div class="history-axis"><span>较早</span><span>刚刚</span></div></section>
+    <footer><span><span class="footer-dot"></span> J7Scope · Mood Monitor</span><details><summary>这些结果如何得到？</summary><p>使用中英情绪关键词与简单否定规则，不是训练过的情绪分类器。指数是正负关键词权重之差除以总权重，不是概率。没有命中或正负混合时不会强制判断好坏。反讽、引用和复杂语境可能误判。J-lens 模式仅匹配当前 top-k 中的完整情绪词，按原始排名加权；孤立词不能反映否定语境，也不能证明模型具有真实情绪。</p></details></footer>
+  </main>
+</body>
+</html>

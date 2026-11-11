@@ -19,6 +19,8 @@ from __future__ import annotations
 import json
 import logging
 import math
+from queue import Empty
+import re
 import threading
 from http.cookies import SimpleCookie
 from urllib.parse import urlsplit
@@ -35,6 +37,7 @@ from .runtime import TaskGate, BusyError
 from .security import Credentials
 
 _LOG = logging.getLogger(__name__)
+_MOOD_SOURCE = re.compile(r"[A-Za-z0-9][A-Za-z0-9 ._+\-]{0,39}")
 
 
 class RequestError(ValueError):
@@ -291,6 +294,8 @@ class _Handler(BaseHTTPRequestHandler):
                                    "expires_in": self.server.credentials.ttl}, 201)
             if path == "/v1/chat/completions":
                 return self._chat_completions()
+            if path == "/mood/events":
+                return self._receive_mood_event()
             if path == "/jspace/interventions":
                 with self.server.gate.enter():
                     return self._run_intervention()
@@ -345,25 +350,55 @@ class _Handler(BaseHTTPRequestHandler):
     def _stream_jspace(self) -> None:
         self._begin_sse()
         sub_id, q = self.bus.subscribe(replay=True, session=self.principal.session)
-        self._sse_send(protocol.meta_event(
-            model=self.backend.model_name,
-            layer=self.backend.layer,
-            backend=type(self.backend).__name__,
-            is_demo=getattr(self.backend, "is_demo", False),
-        ))
         try:
+            meta = protocol.meta_event(
+                model=self.backend.model_name,
+                layer=self.backend.layer,
+                backend=type(self.backend).__name__,
+                is_demo=getattr(self.backend, "is_demo", False),
+            )
+            meta["tool_updates_enabled"] = bool(self.server.credentials.api_key and not self.principal.operator)
+            self._sse_send(meta)
             deadline = time.monotonic() + self.server.credentials.ttl
             while time.monotonic() < deadline and self.server.credentials.resolve(self._token()) is not None:
                 try:
                     event = q.get(timeout=15.0)
-                    self._sse_send(event)
-                except Exception:  # queue.Empty -> heartbeat comment
+                except Empty:
                     self.wfile.write(b": ping\n\n")
                     self.wfile.flush()
-        except (BrokenPipeError, ConnectionResetError):
+                    continue
+                if self.server.credentials.resolve(self._token()) != self.principal:
+                    break
+                self._sse_send(event)
+        except (BrokenPipeError, ConnectionResetError, TimeoutError):
             pass
         finally:
             self.bus.unsubscribe(sub_id)
+
+    def _receive_mood_event(self) -> None:
+        if (not self.server.credentials.api_key or self.principal.operator
+                or not self.headers.get("Authorization", "").startswith("Bearer ")):
+            raise RequestError("mood events require a dedicated session bearer key", 403)
+        body = self._read_body()
+        source, text = body.get("source"), body.get("text")
+        phase = body.get("phase", "complete")
+        if set(body) - {"source", "text", "phase"}:
+            raise RequestError("expected only source, text and optional phase")
+        if not isinstance(source, str) or not _MOOD_SOURCE.fullmatch(source):
+            raise RequestError("source must be a tool name of up to 40 ASCII characters")
+        if not isinstance(text, str) or not text.strip() or len(text) > 500:
+            raise RequestError("text must contain 1–500 characters")
+        try:
+            text.encode("utf-8")
+        except UnicodeError:
+            raise RequestError("text must be valid Unicode") from None
+        if phase not in ("update", "complete"):
+            raise RequestError("phase must be update or complete")
+        self.bus.publish({
+            "type": "mood_update", "id": uuid.uuid4().hex, "ts": time.time(),
+            "source": source, "text": text, "phase": phase,
+        }, session=self.principal.session)
+        return self._json({"accepted": True}, 202)
 
     def _chat_completions(self) -> None:
         body = self._read_body()
@@ -413,7 +448,7 @@ class _Handler(BaseHTTPRequestHandler):
                 full_text.append(step.text)
                 readout = protocol.bucket_readout(step.topk, per_lang=self.server.per_lang)
                 publish(protocol.token_event(seq=seq, request_id=request_id, token=step.token,
-                    readout=readout, model=model, layer=self.backend.layer))
+                    readout=readout, model=model, layer=self.backend.layer, text=step.text))
                 if self.server.record_dir:
                     buffered.append({"seq": seq, "ts_rel": round(time.monotonic() - t_start, 3),
                         "token": step.token, "token_script": protocol.script_of(step.token), "readout": readout})

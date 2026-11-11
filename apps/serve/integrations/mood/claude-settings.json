@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/ABSOLUTE/PATH/j7scope/apps/serve/j7scope_serve/mood_bridge.py\" claude",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -90,6 +90,7 @@ def token_event(
     readout: dict,
     model: str,
     layer: int,
+    text: str = None,
 ) -> dict:
     """Build a per-token J-space event."""
     return {
@@ -99,6 +100,7 @@ def token_event(
         "request_id": request_id,
         "ts": round(time.time(), 3),
         "token": token,
+        "text": token if text is None else text,
         "token_script": script_of(token),
         "model": model,
         "layer": layer,

@@ -18,6 +18,7 @@ dependencies = [
 j7scope = "j7scope_serve.__main__:main"
 j7scope-serve = "j7scope_serve.__main__:main"
 j7scope-validate = "j7scope_serve.validation:main"
+j7scope-integrate = "j7scope_serve.mood_integrate:main"
 
 [project.entry-points."j7scope.backends"]
 hf = "j7scope_serve.backends:HFBackend"
@@ -37,3 +38,6 @@ upstream = [
 packages = ["j7scope", "j7scope_serve"]
 package-dir = {j7scope = "j7scope", j7scope_serve = "apps/serve/j7scope_serve"}
 include-package-data = true
+
+[tool.setuptools.package-data]
+j7scope_serve = ["mood_opencode.mjs"]

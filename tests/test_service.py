@@ -1,11 +1,13 @@
 """HTTP-level reliability, privacy, and admission tests for the preview server."""
 import http.client
 import json
+import os
 from pathlib import Path
+import subprocess
 import sys
 import threading
 import time
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 
 import pytest
 
@@ -116,6 +118,93 @@ def test_body_limit_and_model_validation():
         status, _, raw = request(server, "POST", "/v1/chat/completions", chat(stream=True))
         assert status == 200 and raw.endswith(b"data: [DONE]\n\n")
         assert b'"finish_reason": "length"' in raw
+
+
+def test_event_surface_text_reconstructs_the_actual_chat_response():
+    with running() as server:
+        sub_id, events = server.bus.subscribe()
+        try:
+            code, _, raw = request(server, "POST", "/v1/chat/completions", chat(max_tokens=10))
+            assert code == 200
+            pieces = []
+            while not events.empty():
+                event = events.get_nowait()
+                if event['type'] == 'token':
+                    pieces.append(event['text'])
+            expected = json.loads(raw)['choices'][0]['message']['content']
+            assert ''.join(pieces) == expected
+            assert ' ' in expected
+        finally:
+            server.bus.unsubscribe(sub_id)
+
+
+def test_tool_updates_require_a_session_bearer_and_validate_payload():
+    sample = {"source": "External tool", "text": "开心", "phase": "update"}
+    with running() as server:
+        assert request(server, "POST", "/mood/events", sample)[0] == 403
+    with running(api_key=KEY) as server:
+        token = json.loads(request(server, "POST", "/jspace/sessions", token=KEY)[2])["api_key"]
+        assert request(server, "POST", "/mood/events", sample)[0] == 401
+        assert request(server, "POST", "/mood/events", sample, KEY)[0] == 403
+        cookie = request(server, "POST", "/auth/login", token=token)[1]["Set-Cookie"].split(";", 1)[0]
+        assert request(server, "POST", "/mood/events", sample, headers={"Cookie": cookie})[0] == 403
+        for changes in ({"text": " "}, {"text": "开心" * 251}, {"text": "\ud800"},
+                        {"source": "<b>tool</b>"}, {"phase": "unknown"}, {"prompt": "ignored"}):
+            assert request(server, "POST", "/mood/events", sample | changes, token)[0] == 400
+        assert request(server, "POST", "/mood/events", sample, token)[0] == 202
+
+
+def test_stop_hooks_forward_only_reply_excerpt_to_the_authenticated_viewer(tmp_path):
+    bridge = Path(__file__).resolve().parents[1] / "apps/serve/j7scope_serve/mood_bridge.py"
+    with running(api_key=KEY, record_dir=tmp_path) as server:
+        a, b = [json.loads(request(server, "POST", "/jspace/sessions", token=KEY)[2]) for _ in range(2)]
+        cookie = request(server, "POST", "/auth/login", token=a["api_key"])[1]["Set-Cookie"].split(";", 1)[0]
+        env = {**os.environ, "J7SCOPE_MOOD_SESSION_KEY": a["api_key"],
+               "J7SCOPE_MOOD_PORT": str(server.server_port)}
+        events = []
+        with closing(http.client.HTTPConnection(*server.server_address, timeout=4)) as viewer:
+            viewer.request("GET", "/jspace/stream", headers={"Cookie": cookie})
+            response = viewer.getresponse()
+            assert response.status == 200
+
+            def read_event():
+                line = response.readline()
+                assert line.startswith(b"data: ")
+                assert response.readline() == b"\n"
+                return json.loads(line[6:])
+
+            assert read_event()["tool_updates_enabled"] is True
+            for mode in ("codex", "claude"):
+                payload = {"hook_event_name": "Stop", "last_assistant_message": "a" * 550 + "开心",
+                           "transcript_path": "/nonexistent/history", "input": "do not forward"}
+                completed = subprocess.run([sys.executable, str(bridge), mode],
+                                           input=json.dumps(payload), text=True,
+                                           capture_output=True, env=env, timeout=4)
+                assert (completed.returncode, completed.stdout.strip(), completed.stderr) == (0, "{}", "")
+                events.append(read_event())
+            response.close()
+        assert [ev["source"] for ev in events] == ["Codex", "Claude Code"]
+        for ev in events:
+            assert ev["type"] == "mood_update" and ev["phase"] == "complete"
+            assert ev["text"] == "a" * 498 + "开心"
+            assert set(ev) == {"type", "id", "ts", "source", "text", "phase"}
+        sid, other_events = server.bus.subscribe(session=b["session_id"])
+        try:
+            assert other_events.empty()
+        finally:
+            server.bus.unsubscribe(sid)
+        assert not list(tmp_path.iterdir())
+
+
+def test_stop_hook_is_nonblocking_when_input_or_local_service_is_unavailable():
+    bridge = Path(__file__).resolve().parents[1] / "apps/serve/j7scope_serve/mood_bridge.py"
+    for payload in ('{', '{"hook_event_name":"Stop","last_assistant_message":"开心"}'):
+        completed = subprocess.run(
+            [sys.executable, str(bridge), "codex"], input=payload, text=True,
+            capture_output=True, timeout=3,
+            env={**os.environ, "J7SCOPE_MOOD_PORT": "0", "J7SCOPE_MOOD_SESSION_KEY": "test-only"},
+        )
+        assert (completed.returncode, completed.stdout.strip(), completed.stderr) == (0, "{}", "")
 
 
 def test_model_serialization_and_bounded_queue():
