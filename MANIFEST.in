@@ -4,8 +4,9 @@ recursive-include apps/serve/j7scope_serve *.py
 include apps/serve/j7scope_serve/mood_opencode.mjs
 recursive-include apps/serve/integrations/mood *.json
 include data/probe_prompts_en.jsonl data/probe_prompts_zh.jsonl
-include CONTRIBUTING.md CHANGELOG.md Dockerfile compose.yaml
+include README.en.md CONTRIBUTING.md CHANGELOG.md Dockerfile compose.yaml
 recursive-include docs *.md *.json
 include docs/screenshots/mood-dashboard.jpg docs/screenshots/mood-dashboard-en.jpg docs/screenshots/mood-window.jpg
+include docs/screenshots/codex-live-vectors.jpg
 recursive-include examples *.json
 include scripts/smoke_installed.py

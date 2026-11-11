@@ -2,11 +2,13 @@
 
 # J7Scope
 
+**简体中文** | [English](README.en.md)
+
 **可自行部署的 LLM 内部表示观测与实验工具。** 研究员可以在本地或云 GPU 上运行模型，实时查看 J-lens 读出、执行 activation patching，并把会话录制成可回放、可比较、带来源信息的实验产物。
 
 **Self-hosted observatory for LLM internal representations and reproducible J-lens experiments.**
 
-[Research Preview v0.2.0rc2](https://github.com/arthurpanhku/j7scope/releases/tag/v0.2.0rc2) · [安装与部署](docs/research-preview.md) · [扩展接口](docs/extending.md) · [静态演示](https://arthurpanhku.me/j7scope/) · Apache-2.0
+[Research Preview v0.2.0rc2](https://github.com/arthurpanhku/j7scope/releases/tag/v0.2.0rc2) · [安装与部署](docs/research-preview.md) · [扩展接口](docs/extending.md) · [静态演示](https://arthurpanhku.me/j7scope/) · [心情实时看板](#心情实时看板) · Apache-2.0
 
 ## 1. 工具定位与当前范围
 
@@ -398,7 +400,9 @@ smoke validation. It supports text chat rather than complete agent tool executio
 Ordinary chat APIs cannot substitute for internal activation access. See
 [installation, deployment, validation and limitations](docs/research-preview.md).
 
-### 心情实时看板
+## 心情实时看板
+
+看板与工具集成请使用当前仓库源码安装（`pip install -e .`）。
 
 打开服务的 `/mood.html`，可即时分析输入文字，或订阅当前模型输出 / J-lens 词汇读出，
 以表情、情绪指数和趋势显示正负情绪信号；也支持合成演示。点击 **集成小窗** 可把看板放在编辑器旁，
@@ -416,3 +420,20 @@ Ordinary chat APIs cannot substitute for internal activation access. See
 下图是集成小窗收到一条 Claude Code 格式的测试回复后的状态：
 
 <img src="docs/screenshots/mood-window.jpg" alt="J7Scope 集成小窗：Claude Code 回复的情绪信号" width="360">
+
+### Codex 流式对话与向量词汇
+
+运行 `j7scope-codex-live` 开始一场独立的 Codex 对话。在终端输入消息，
+小窗的 **Agent tools** 会随着回复生成更新情绪指数和命中的词。
+普通 Codex 桌面聊天通过已配置的钩子在回合结束时更新。
+
+```bash
+j7scope-codex-live --session-key-file /path/to/session-key
+```
+
+启动 J7Scope 服务时加上 `--mood-embeddings`，小窗会同时显示 **Vector-space words**。
+这六个词是本机 MiniLM 根据最近 500 个字符计算出的语义近邻。
+本地 HF 模型的 J-lens 词汇读出可在 **Live model** 中查看。
+见 [流式接入说明](docs/mood-monitor.md#4-在-codex-回复过程中更新)。
+
+<img src="docs/screenshots/codex-live-vectors.jpg" alt="J7Scope 英文小窗显示 Codex 回复的情绪指数和 MiniLM 语义近邻" width="360">

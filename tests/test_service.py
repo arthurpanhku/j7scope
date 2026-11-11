@@ -138,6 +138,28 @@ def test_event_surface_text_reconstructs_the_actual_chat_response():
             server.bus.unsubscribe(sub_id)
 
 
+def test_mood_embedding_neighbors_are_published_to_the_same_session():
+    class Encoder:
+        model_name = "local-test"
+
+        def neighbors(self, text):
+            assert text == "I feel hopeful."
+            return [{"word": "hope", "cosine": 0.85}]
+
+    with running(api_key=KEY, mood_embeddings=Encoder()) as server:
+        session = json.loads(request(server, "POST", "/jspace/sessions", token=KEY)[2])
+        sub, events = server.bus.subscribe(session=session["session_id"])
+        try:
+            data = {"source": "Codex", "text": "I feel hopeful.", "phase": "update"}
+            assert request(server, "POST", "/mood/events", data, session["api_key"])[0] == 202
+            event = events.get_nowait()
+            assert event["phase"] == "update"
+            assert event["embedding_model"] == "local-test"
+            assert event["neighbors"] == [{"word": "hope", "cosine": 0.85}]
+        finally:
+            server.bus.unsubscribe(sub)
+
+
 def test_tool_updates_require_a_session_bearer_and_validate_payload():
     sample = {"source": "External tool", "text": "开心", "phase": "update"}
     with running() as server:
