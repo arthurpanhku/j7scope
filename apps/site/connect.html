@@ -2,7 +2,7 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>J7Scope · Connect</title><link rel="stylesheet" href="assets/jspace.css"></head>
 <body><header><h1><a href="./">J7Scope</a> <span class="sub">Connect · 连接服务</span></h1>
-<nav><a href="live.html">Live</a><a href="./">Gallery</a></nav></header>
+<nav><a href="mood.html?mode=live">心情看板</a><a href="live.html">Live</a><a href="./">Gallery</a></nav></header>
 <main style="max-width:640px;margin:4rem auto">
 <h2>Connect to your research session</h2>
 <p>Enter the session key supplied by your operator, or the operator key for your own workspace. The browser receives an HttpOnly session cookie. Keys are never added to URLs or browser storage.</p>
@@ -11,6 +11,7 @@
 <button type="submit">Connect</button> <button type="button" id="logout">Disconnect</button></form>
 <p id="status" role="status"></p>
 <p><a href="live.html">Open live view →</a> · <a href="./">Open session gallery →</a></p>
+<p><a href="mood.html?mode=tools&amp;view=compact">打开工具集成小窗 →</a></p>
 <p>Each session has its own events and recordings. After a server restart or session expiry, ask the operator for a new session key.</p>
 </main><script>
 const status = document.getElementById('status');

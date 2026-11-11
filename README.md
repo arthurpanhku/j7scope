@@ -397,3 +397,22 @@ admission, scoped session credentials/events/recordings, and pretrained SmolLM2 
 smoke validation. It supports text chat rather than complete agent tool execution.
 Ordinary chat APIs cannot substitute for internal activation access. See
 [installation, deployment, validation and limitations](docs/research-preview.md).
+
+### 心情实时看板
+
+打开服务的 `/mood.html`，可即时分析输入文字，或订阅当前模型输出 / J-lens 词汇读出，
+以表情、情绪指数和趋势显示正负情绪信号；也支持合成演示。点击 **集成小窗** 可把看板放在编辑器旁，
+用 Codex、Claude Code 或 OpenCode V1 的回合结束事件自动更新，也可接收其他工具的 HTTP 推送。
+完整看板和小窗均可在右上角切换中英文，也可在 URL 加 `lang=en` 直接打开英文版。
+采用关键词规则，不代表真实心理状态。见 [启动与工具集成说明](docs/mood-monitor.md)。
+
+在要接入的项目中，使用 `j7scope-integrate` 预览自动发现的 Agent 和配置路径；
+加 `--apply` 写入项目级配置，保留已有钩子。也可用 `--agent` 指定工具。
+
+![J7Scope 心情看板：文字输入、情绪指数与近期趋势](docs/screenshots/mood-dashboard.jpg)
+
+[查看英文版截图](docs/screenshots/mood-dashboard-en.jpg)
+
+下图是集成小窗收到一条 Claude Code 格式的测试回复后的状态：
+
+<img src="docs/screenshots/mood-window.jpg" alt="J7Scope 集成小窗：Claude Code 回复的情绪信号" width="360">
